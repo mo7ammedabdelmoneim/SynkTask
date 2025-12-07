@@ -1,4 +1,8 @@
 
+using HealthCore.DataAccess.Data;
+using HealthCore.DataAccess.IConfiguration;
+using Microsoft.EntityFrameworkCore;
+
 namespace HealthCore.API
 {
     public class Program
@@ -10,6 +14,15 @@ namespace HealthCore.API
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            // Add DB Service
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

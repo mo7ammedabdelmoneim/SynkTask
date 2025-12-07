@@ -21,4 +21,8 @@
     <ProjectReference Include="..\HealthCore.Models\HealthCore.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
 </Project>
