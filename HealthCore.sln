@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthCore.API", "HealthCore.API\HealthCore.API.csproj", "{F4A38FC2-B1CD-408B-BF07-59ACD6D292BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynkTask.API", "HealthCore.API\SynkTask.API.csproj", "{F4A38FC2-B1CD-408B-BF07-59ACD6D292BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthCore.DataAccess", "HealthCore.DataAccess\HealthCore.DataAccess.csproj", "{E031208D-E00B-4B34-BCDA-E5E6E93B1BE2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynkTask.DataAccess", "HealthCore.DataAccess\SynkTask.DataAccess.csproj", "{E031208D-E00B-4B34-BCDA-E5E6E93B1BE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HealthCore.Models", "HealthCore.Models\HealthCore.Models.csproj", "{F6FF20C2-FE77-4AB1-BB66-0C90EEC8D0AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynkTask.Models", "HealthCore.Models\SynkTask.Models.csproj", "{F6FF20C2-FE77-4AB1-BB66-0C90EEC8D0AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

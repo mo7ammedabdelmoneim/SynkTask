@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.Models.Incoming
+namespace SynkTask.Models.DTOs.Auth
 {
     public class LoginDTO
     {

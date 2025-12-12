@@ -1,11 +1,11 @@
-﻿using HealthCore.DataAccess.IRepository;
+﻿using SynkTask.DataAccess.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.DataAccess.IConfiguration
+namespace SynkTask.DataAccess.IConfiguration
 {
     public interface IUnitOfWork
     {

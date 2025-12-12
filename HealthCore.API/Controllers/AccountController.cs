@@ -1,8 +1,8 @@
-﻿using HealthCore.API.Configurations.Models;
-using HealthCore.DataAccess.IConfiguration;
-using HealthCore.Models;
-using HealthCore.Models.DTOs.Outcoming;
-using HealthCore.Models.Incoming;
+﻿using SynkTask.API.Configurations.Models;
+using SynkTask.DataAccess.IConfiguration;
+using SynkTask.DataAccess.Repository;
+using SynkTask.Models;
+using SynkTask.Models.DTOs.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -12,137 +12,152 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using SynkTask.Models.DTOs;
+using Azure;
+using System.Data;
+using SynkTask.DataAccess.IRepository;
+using Microsoft.AspNetCore.Authorization;
 
-namespace HealthCore.API.Controllers
+namespace SynkTask.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
         private readonly IUnitOfWork unitOfWork;
-        private readonly UserManager<IdentityUser> userManager;
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly IConfiguration configuration;
         private readonly JwtConfig jwtConfig;
 
-        public AccountController(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager, IOptionsMonitor<JwtConfig> optionsMonitor, IConfiguration configuration )
+        public AccountController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager, IOptionsMonitor<JwtConfig> optionsMonitor, IConfiguration configuration)
         {
             this.unitOfWork = unitOfWork;
             this.userManager = userManager;
             this.configuration = configuration;
-            this.jwtConfig = optionsMonitor.CurrentValue;
+            jwtConfig = optionsMonitor.CurrentValue;
         }
 
         [HttpPost("Register")]
-        [ProducesResponseType(typeof(UserRegisterResponse)  , 200 )]
+        [ProducesResponseType(typeof(AuthResponseDTO), 200)]
         public async Task<IActionResult> Register(RegisterDTO registerDTO)
         {
-            var result = new UserRegisterResponse { Success = false };
+            var response = new ApiResponse<AuthResponseDTO>();
+
             if (!ModelState.IsValid)
             {
-                result.Errors = ModelState.Select(m => m.Value.ToString()).ToList();
-                return BadRequest(result);
+                response.Message = "Invalid input data";
+                response.Errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(response);
             }
 
             var user = await userManager.FindByEmailAsync(registerDTO.Email);
-            if(user != null)
+            if (user != null)
             {
-                result.Errors = new List<string>() {"User is Already Exist!"};
-                return BadRequest(result);
+                response.Message = "Email already exists";
+                return BadRequest(response);
             }
-            user = new IdentityUser
+
+            var newUser = new ApplicationUser
             {
-                UserName = registerDTO.Email,
+                UserName = registerDTO.UserName,
                 Email = registerDTO.Email,
                 EmailConfirmed = true
             };
-            var addResult = await userManager.CreateAsync(user, registerDTO.Password);
-            if (!addResult.Succeeded)
+
+            var result = await userManager.CreateAsync(newUser, registerDTO.Password);
+
+            if (!result.Succeeded)
             {
-                result.Errors = addResult.Errors.Select(e => e.Description).ToList();
-                return BadRequest(result);
+                response.Message = "Registration failed";
+                response.Errors = result.Errors.Select(e => e.Description).ToList();
+                return BadRequest(response);
             }
 
-            // Add user to Users Table in DB
-            var appUser = new User
-            {
-                FirstName = registerDTO.FirstName,
-                LastName = registerDTO.LastName,
-                Email = registerDTO.Email,
-                BirthDate = DateTime.UtcNow,
-                IdentityId = user.Id,
-                Satus = 1,
-                Country = "",
-                Phone = "",
-            };
-            await unitOfWork.Users.AddAsync(appUser);
-            await unitOfWork.CompleteAsync();
+            response.Success = true;
+            response.Message = "User registered successfully";
+            response.Data = await CreateTokenAsync(newUser.Id);
 
-            var token = CreateToken(user);
-
-            result.Success = true;
-            result.Token = token;
-            return Ok(result);
+            return Ok(response);
         }
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDTO loginDto)
         {
-            var result = new UserLoginResponse { Success = false };
+            var response = new ApiResponse<AuthResponseDTO>();
 
             if (!ModelState.IsValid)
             {
-                result.Errors = ModelState.Select(m => m.Value.ToString()).ToList();
-                return BadRequest(result);
+                response.Message = "Invalid input data";
+                response.Errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(response);
             }
 
             var user = await userManager.FindByEmailAsync(loginDto.Email);
-            if(user == null)
+            if (user == null)
             {
-                result.Errors = new List<string>() { "Email Or Password is Wrong." };
-                return BadRequest(result);
+                response.Message = "Verification Failed";
+                response.Errors = new List<string>() { "Email Or Password is Wrong." };
+                return BadRequest(response);
             }
 
             var check = await userManager.CheckPasswordAsync(user, loginDto.Password);
             if (!check)
             {
-                result.Errors = new List<string>() { "Email Or Password is Wrong." };
-                return BadRequest(result);
+                response.Message = "Verification Failed";
+                response.Errors = new List<string>() { "Email Or Password is Wrong." };
+                return BadRequest(response);
             }
 
-            result.Success = true;
-            result.Token = CreateToken(user);
-            return Ok(result);
+            response.Success = true;
+            response.Message = "User Login successfully";
+            response.Data = await CreateTokenAsync(user.Id);
+            return Ok(response);
         }
 
-
-
-
-        string CreateToken(IdentityUser user)
+        async Task<AuthResponseDTO> CreateTokenAsync(string userId)
         {
-            var key = Encoding.ASCII.GetBytes(jwtConfig.SecretKey);
+            var user = await userManager.FindByIdAsync(userId);
+            AuthResponseDTO response = new();
+            SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecurityKey"]));
+            SigningCredentials signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var claims = new List<Claim>();
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+
+            var roles = await userManager.GetRolesAsync(user);
+            foreach (var roleName in roles)
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier,user.Id),
-                    new Claim(JwtRegisteredClaimNames.Sub,user.Email),
-                    new Claim(JwtRegisteredClaimNames.Email,user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
-                }),
-                Expires = DateTime.UtcNow.AddHours(3),
-                SigningCredentials = new SigningCredentials(
-                        new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256
-                )
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
+
+            JwtSecurityToken token = new JwtSecurityToken(
+                issuer: configuration["JWT:VaildIssuer"], // Web API (Provider)
+                audience: configuration["JWT:VaildAudience"], // Consumer (Angular)
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: signingCredentials
+            );
+
+            response = new AuthResponseDTO
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                UserName = user.UserName,
+                Email = user.Email,
+                Expiration = DateTime.Now.AddHours(1),
+                Roles = roles
             };
 
-            // generate the security obj token
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            // convert token obj to string
-            return tokenHandler.WriteToken(token);
+            return response;
         }
+
     }
 }

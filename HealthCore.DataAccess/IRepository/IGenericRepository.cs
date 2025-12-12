@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.DataAccess.IRepository
+namespace SynkTask.DataAccess.IRepository
 {
     public interface IGenericRepository<T> where T : class
     {

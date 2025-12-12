@@ -1,13 +1,13 @@
-﻿using HealthCore.Models;
+﻿using SynkTask.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.DataAccess.IRepository
+namespace SynkTask.DataAccess.IRepository
 {
-    public interface IUserRepository: IGenericRepository<User>
+    public interface IUserRepository: IGenericRepository<ApplicationUser>
     {
     }
 }

@@ -1,7 +1,7 @@
-﻿using HealthCore.DataAccess.IConfiguration;
-using HealthCore.DataAccess.IRepository;
-using HealthCore.DataAccess.Repository;
-using HealthCore.Models;
+﻿using SynkTask.DataAccess.IConfiguration;
+using SynkTask.DataAccess.IRepository;
+using SynkTask.DataAccess.Repository;
+using SynkTask.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.DataAccess.Data
+namespace SynkTask.DataAccess.Data
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
@@ -25,7 +25,7 @@ namespace HealthCore.DataAccess.Data
 
             Users = new UserRepository(
                 context,
-                loggerFactory.CreateLogger<GenericRepository<User>>()
+                loggerFactory.CreateLogger<GenericRepository<ApplicationUser>>()
             );
         }
 

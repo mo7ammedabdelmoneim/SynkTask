@@ -1,14 +1,15 @@
 
-using HealthCore.API.Configurations.Models;
-using HealthCore.DataAccess.Data;
-using HealthCore.DataAccess.IConfiguration;
+using SynkTask.API.Configurations.Models;
+using SynkTask.DataAccess.Data;
+using SynkTask.DataAccess.IConfiguration;
+using SynkTask.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace HealthCore.API
+namespace SynkTask.API
 {
     public class Program
     {
@@ -31,7 +32,7 @@ namespace HealthCore.API
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Register the Identity Service
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {   // with Reset password Rules
                 // Password settings (strong but user-friendly)
                 options.Password.RequireDigit = true;                    // at least one number
@@ -49,6 +50,7 @@ namespace HealthCore.API
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.AllowedForNewUsers = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>();
+
 
             // Register the Cors Service
             builder.Services.AddCors(options =>
@@ -74,11 +76,12 @@ namespace HealthCore.API
                 options.RequireHttpsMetadata = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    //ValidIssuer = builder.Configuration["JWT:VaildIssuer"],
-                    ValidateAudience = false,
-                    //ValidAudience = builder.Configuration["JWT:VaildAudience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"]))
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["JWT:VaildIssuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["JWT:VaildAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecurityKey"])),
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
@@ -98,7 +101,6 @@ namespace HealthCore.API
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

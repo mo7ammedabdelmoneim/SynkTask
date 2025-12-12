@@ -1,4 +1,4 @@
-﻿namespace HealthCore.API.Configurations.Models
+﻿namespace SynkTask.API.Configurations.Models
 {
     public class JwtConfig
     {

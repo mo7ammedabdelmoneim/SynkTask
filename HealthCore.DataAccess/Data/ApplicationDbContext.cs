@@ -1,4 +1,4 @@
-﻿using HealthCore.Models;
+﻿using SynkTask.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -7,14 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCore.DataAccess.Data
+namespace SynkTask.DataAccess.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
         }
 
-        public virtual DbSet<User> Users {  get; set; }
+        public virtual DbSet<ApplicationUser> Users {  get; set; }
     }
 }

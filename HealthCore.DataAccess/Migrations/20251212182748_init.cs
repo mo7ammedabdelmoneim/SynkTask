@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace HealthCore.DataAccess.Migrations
+namespace SynkTask.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class init : Migration
