@@ -81,12 +81,15 @@ namespace SynkTask.API.Controllers
 
             response.Success = true;
             response.Message = "User registered successfully";
-            response.Data = await CreateTokenAsync(newUser.Id);
-
+            var data = await CreateTokenAsync(user.Id);
+            response.Data = data;
+            if (!string.IsNullOrEmpty(data.RefreshToken))
+                SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
             return Ok(response);
         }
 
         [HttpPost("Login")]
+        [ProducesResponseType(typeof(AuthResponseDTO), 200)]
         public async Task<IActionResult> Login(LoginDTO loginDto)
         {
             var response = new ApiResponse<AuthResponseDTO>();
@@ -116,13 +119,46 @@ namespace SynkTask.API.Controllers
 
             response.Success = true;
             response.Message = "User Login successfully";
-            response.Data = await CreateTokenAsync(user.Id);
+            var data = await CreateTokenAsync(user.Id);
+            response.Data = data;
+            if (!string.IsNullOrEmpty(data.RefreshToken))
+                SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
             return Ok(response);
         }
 
+        [HttpGet("RefreshToken")]
+        [ProducesResponseType(typeof(AuthResponseDTO), 200)]
+        public async Task<IActionResult> RefreshToken()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (refreshToken == null)
+                return BadRequest(new ApiResponse<string>
+                { Message = "Operation Failed", Errors = new List<string> { "Refresh Token required In Cookie[refreshToken]" } });
+
+            var refreshTokenResult = await RefreshTokenAsync(refreshToken);
+            if (refreshTokenResult.Token == null)
+                return BadRequest(new ApiResponse<string>
+                { Success = false, Message = "Invalid Token" });
+
+            SetRefreshTokenInCookie(refreshTokenResult.RefreshToken, refreshTokenResult.RefreshTokenExpiration);
+
+            var response = new ApiResponse<AuthResponseDTO>
+            {
+                Success = true,
+                Message = "Refresh Token Operation is done successfully.",
+                Data = refreshTokenResult
+            };
+            return Ok(response);
+        }
+
+
+
+
+
         async Task<AuthResponseDTO> CreateTokenAsync(string userId)
         {
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await unitOfWork.Users.GetAsync(u => u.Id == userId, includedProperties: "RefreshTokens");
             AuthResponseDTO response = new();
             SecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecurityKey"]));
             SigningCredentials signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -143,7 +179,7 @@ namespace SynkTask.API.Controllers
                 issuer: configuration["JWT:VaildIssuer"], // Web API (Provider)
                 audience: configuration["JWT:VaildAudience"], // Consumer (Angular)
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: signingCredentials
             );
 
@@ -152,11 +188,78 @@ namespace SynkTask.API.Controllers
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 UserName = user.UserName,
                 Email = user.Email,
-                Expiration = DateTime.Now.AddHours(1),
                 Roles = roles
             };
 
+            if (user.RefreshTokens.Any(t => t.IsActive))
+            {
+                var activeRefreshToken = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
+                response.RefreshToken = activeRefreshToken?.Token;
+                response.RefreshTokenExpiration = activeRefreshToken.ExpiresOn;
+            }
+            else
+            {
+                var refreshToken = GenerateRefreshToken();
+                response.RefreshToken = refreshToken?.Token;
+                response.RefreshTokenExpiration = refreshToken.ExpiresOn;
+                user.RefreshTokens.Add(refreshToken);
+                await userManager.UpdateAsync(user);
+            }
+
             return response;
+        }
+
+        RefreshToken GenerateRefreshToken()
+        {
+            var random = new byte[32];
+
+            using var generator = new RNGCryptoServiceProvider();
+            generator.GetBytes(random);
+
+            return new RefreshToken
+            {
+                Token = Convert.ToBase64String(random),
+                CreatedOn = DateTime.UtcNow,
+                ExpiresOn = DateTime.UtcNow.AddDays(30),
+            };
+        }
+
+        void SetRefreshTokenInCookie(string refreshToken, DateTime expiresOn)
+        {
+            var options = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = expiresOn.ToLocalTime(),
+            };
+
+            Response.Cookies.Append("refreshToken", refreshToken, options);
+        }
+
+        async Task<AuthResponseDTO> RefreshTokenAsync(string token)
+        {
+            // check if this refreshToken is related to a user
+            var user = await unitOfWork.Users.GetAsync(u => u.RefreshTokens.Any(t => t.Token == token), includedProperties: "RefreshTokens");
+            if (user == null)
+                return new AuthResponseDTO();
+
+            // check if this refreshToken is still active
+            var refreshToken = user.RefreshTokens.Single(t => t.Token == token);
+            if (!refreshToken.IsActive)
+                return new AuthResponseDTO();
+
+            // generate new Refresh Token
+            refreshToken.RevokedOn = DateTime.UtcNow;
+
+            var newRefreshToken = GenerateRefreshToken();
+            user.RefreshTokens.Add(newRefreshToken);
+            await userManager.UpdateAsync(user);
+
+            // create new JwtToken
+            var newJwtTokenResponse = await CreateTokenAsync(user.Id);
+            newJwtTokenResponse.RefreshToken = newRefreshToken.Token;
+            newJwtTokenResponse.RefreshTokenExpiration = newRefreshToken.ExpiresOn;
+
+            return newJwtTokenResponse;
         }
 
     }
