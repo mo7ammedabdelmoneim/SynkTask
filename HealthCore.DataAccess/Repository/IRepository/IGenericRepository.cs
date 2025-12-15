@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkTask.DataAccess.IRepository
+namespace SynkTask.DataAccess.Repository.IRepository
 {
     public interface IGenericRepository<T> where T : class
     {

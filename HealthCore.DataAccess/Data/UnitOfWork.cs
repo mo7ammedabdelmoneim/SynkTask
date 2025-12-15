@@ -1,5 +1,4 @@
 ﻿using SynkTask.DataAccess.IConfiguration;
-using SynkTask.DataAccess.IRepository;
 using SynkTask.DataAccess.Repository;
 using SynkTask.Models;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SynkTask.DataAccess.Repository.IRepository;
 
 namespace SynkTask.DataAccess.Data
 {

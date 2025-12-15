@@ -17,7 +17,6 @@ using System.Text;
 using SynkTask.Models.DTOs;
 using Azure;
 using System.Data;
-using SynkTask.DataAccess.IRepository;
 using Microsoft.AspNetCore.Authorization;
 
 namespace SynkTask.API.Controllers
@@ -87,7 +86,7 @@ namespace SynkTask.API.Controllers
                 SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
             return Ok(response);
         }
-
+  
         [HttpPost("Login")]
         [ProducesResponseType(typeof(AuthResponseDTO), 200)]
         public async Task<IActionResult> Login(LoginDTO loginDto)

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkTask.DataAccess.IRepository
+namespace SynkTask.DataAccess.Repository.IRepository
 {
-    public interface IUserRepository: IGenericRepository<ApplicationUser>
+    public interface IUserRepository : IGenericRepository<ApplicationUser>
     {
     }
 }

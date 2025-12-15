@@ -1,4 +1,4 @@
-﻿using SynkTask.DataAccess.IRepository;
+﻿using SynkTask.DataAccess.Repository.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
