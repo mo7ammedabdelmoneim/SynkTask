@@ -13,6 +13,8 @@ namespace SynkTask.Models.DTOs.Auth
         public string UserName { get; set; }
         public string Email { get; set; }
         public IList<string>? Roles { get; set; }
+        public Guid? UserId { get; set; }
+
 
         [JsonIgnore]
         public string? RefreshToken { get; set; }

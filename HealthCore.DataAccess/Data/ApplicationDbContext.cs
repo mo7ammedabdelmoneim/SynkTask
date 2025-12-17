@@ -23,5 +23,16 @@ namespace SynkTask.DataAccess.Data
         public virtual DbSet<ProjectTask> ProjectTasks {  get; set; }
         public virtual DbSet<Todo> Todos {  get; set; }
         public virtual DbSet<Notification> Notifications {  get; set; }
+        public virtual DbSet<IdentityApplicationUser> IdentityApplicationUsers {  get; set; }
+
+
+
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.Entity<IdentityApplicationUser>()
+                    .HasKey(i => new { i.IdentityUserId, i.ApplicationUserId });
+        }
     }
 }

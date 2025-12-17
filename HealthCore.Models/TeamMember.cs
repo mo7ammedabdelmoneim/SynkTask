@@ -13,6 +13,7 @@ namespace SynkTask.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
+        public string Country { get; set; }
         public string Role { get; set; } = "TEAMMEMBER";
 
 
@@ -21,8 +22,8 @@ namespace SynkTask.Models
 
         [ForeignKey(nameof(ApplicationUserId))]
         public ApplicationUser ApplicationUser { get; set; }
-
-        public Guid TeamLeadId { get; set; }
+                     
+        public Guid? TeamLeadId { get; set; }
 
         [ForeignKey(nameof(TeamLeadId))]
         public TeamLead TeamLead { get; set; }

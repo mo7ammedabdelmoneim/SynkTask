@@ -13,7 +13,7 @@ namespace SynkTask.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +91,8 @@ namespace SynkTask.API
 
             var app = builder.Build();
 
+            await SeedRolesAsync(app);
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -105,6 +107,24 @@ namespace SynkTask.API
             app.MapControllers();
 
             app.Run();
+        }
+
+
+        static async Task SeedRolesAsync(WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            string[] roles = { "admin", "teamLead", "teamMember" };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
         }
     }
 }

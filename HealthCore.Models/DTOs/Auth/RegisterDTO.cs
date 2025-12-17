@@ -9,7 +9,9 @@ namespace SynkTask.Models.DTOs.Auth
 {
     public class RegisterDTO
     {
-        public string UserName { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Country { get; set; }
 
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; }

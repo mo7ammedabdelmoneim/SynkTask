@@ -64,13 +64,12 @@ namespace SynkTask.API.Controllers
 
             var newUser = new ApplicationUser
             {
-                UserName = registerDTO.UserName,
+                UserName = registerDTO.Email,
                 Email = registerDTO.Email,
                 EmailConfirmed = true
             };
 
             var result = await userManager.CreateAsync(newUser, registerDTO.Password);
-
             if (!result.Succeeded)
             {
                 response.Message = "Registration failed";
@@ -78,9 +77,36 @@ namespace SynkTask.API.Controllers
                 return BadRequest(response);
             }
 
+            var roleResult = await userManager.AddToRoleAsync(newUser, "teamMember");
+            if (!roleResult.Succeeded)
+            {
+                response.Message = "Registration failed";
+                response.Errors = roleResult.Errors.Select(e => e.Description).ToList();
+                return BadRequest(response);
+            }
+
+            var member = new TeamMember
+            {
+                FirstName = registerDTO.FirstName,
+                LastName = registerDTO.LastName,
+                Email = registerDTO.Email,
+                Country = registerDTO.Country,
+                ApplicationUserId = newUser.Id
+            };
+            await unitOfWork.TeamMembers.AddAsync(member);
+            await unitOfWork.CompleteAsync();
+
+            var identityApplicationUser = new IdentityApplicationUser
+            {
+                ApplicationUserId = member.Id,
+                IdentityUserId = newUser.Id,
+            };
+            await unitOfWork.IdentityApplicationUsers.AddAsync(identityApplicationUser);
+            await unitOfWork.CompleteAsync();
+
             response.Success = true;
             response.Message = "User registered successfully";
-            var data = await CreateTokenAsync(user.Id);
+            var data = await CreateTokenAsync(newUser.Id,member.Id);
             response.Data = data;
             if (!string.IsNullOrEmpty(data.RefreshToken))
                 SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
@@ -116,9 +142,14 @@ namespace SynkTask.API.Controllers
                 return BadRequest(response);
             }
 
+            var appUser= await unitOfWork.IdentityApplicationUsers.GetAsync(u=> u.IdentityUserId == user.Id);
+            Guid? appUserId = null;
+            if (appUser != null)
+                appUserId = appUser.ApplicationUserId;
+
             response.Success = true;
             response.Message = "User Login successfully";
-            var data = await CreateTokenAsync(user.Id);
+            var data = await CreateTokenAsync(user.Id, appUser.ApplicationUserId);
             response.Data = data;
             if (!string.IsNullOrEmpty(data.RefreshToken))
                 SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
@@ -138,7 +169,7 @@ namespace SynkTask.API.Controllers
             var refreshTokenResult = await RefreshTokenAsync(refreshToken);
             if (refreshTokenResult.Token == null)
                 return BadRequest(new ApiResponse<string>
-                { Success = false, Message = "Invalid Token" });
+                { Success = false, Message = "Operation Failed", Errors = new List<string> { "Invalid Token" } });
 
             SetRefreshTokenInCookie(refreshTokenResult.RefreshToken, refreshTokenResult.RefreshTokenExpiration);
 
@@ -150,12 +181,11 @@ namespace SynkTask.API.Controllers
             };
             return Ok(response);
         }
+        
 
 
 
-
-
-        async Task<AuthResponseDTO> CreateTokenAsync(string userId)
+        async Task<AuthResponseDTO> CreateTokenAsync(string userId, Guid? appUsrId =null)
         {
             var user = await unitOfWork.Users.GetAsync(u => u.Id == userId, includedProperties: "RefreshTokens");
             AuthResponseDTO response = new();
@@ -166,6 +196,9 @@ namespace SynkTask.API.Controllers
             claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
             claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            if(appUsrId != null)
+                claims.Add(new Claim("appUsrId", appUsrId.ToString()));
+
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
 
             var roles = await userManager.GetRolesAsync(user);
@@ -187,7 +220,8 @@ namespace SynkTask.API.Controllers
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 UserName = user.UserName,
                 Email = user.Email,
-                Roles = roles
+                Roles = roles,
+                UserId = appUsrId
             };
 
             if (user.RefreshTokens.Any(t => t.IsActive))

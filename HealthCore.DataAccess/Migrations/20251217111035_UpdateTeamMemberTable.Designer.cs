@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SynkTask.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using SynkTask.DataAccess.Data;
 namespace SynkTask.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217111035_UpdateTeamMemberTable")]
+    partial class UpdateTeamMemberTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -246,19 +249,6 @@ namespace SynkTask.DataAccess.Migrations
                     b.HasKey("Name");
 
                     b.ToTable("Countries");
-                });
-
-            modelBuilder.Entity("SynkTask.Models.IdentityApplicationUsers", b =>
-                {
-                    b.Property<string>("IdentityUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<Guid>("ApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("IdentityUserId", "ApplicationUserId");
-
-                    b.ToTable("IdentityApplicationUsers");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Notification", b =>
