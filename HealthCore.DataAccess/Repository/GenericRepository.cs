@@ -39,9 +39,18 @@ namespace SynkTask.DataAccess.Repository
             }
         }
 
-        public Task<bool> DeleteAsync(T entity, string userId)
+        public bool Delete(T entity, string userId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                dbSet.Remove(entity);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Delete Error in {typeof(T).Name}");
+                return false;
+            }
         }
 
         public virtual async Task<IEnumerable<T>> GetAllAsync(
@@ -71,9 +80,7 @@ namespace SynkTask.DataAccess.Repository
             }
         }
 
-        public virtual async Task<T?> GetAsync(
-            Expression<Func<T, bool>> filter,
-            string? includedProperties = null)
+        public virtual async Task<T?> GetAsync( Expression<Func<T, bool>> filter,  string? includedProperties = null)
         {
             try
             {
@@ -97,9 +104,18 @@ namespace SynkTask.DataAccess.Repository
             }
         }
 
-        public Task<bool> UpsertAsync(T entity)
+        public virtual bool Update(T entity)
         {
-            throw new NotImplementedException();
+            try
+            {
+                dbSet.Update(entity);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Update Error in {typeof(T).Name}");
+                return false;
+            }
         }
     }
 }

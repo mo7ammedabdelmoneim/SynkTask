@@ -1,4 +1,5 @@
-﻿using SynkTask.DataAccess.Repository.IRepository;
+﻿using SynkTask.DataAccess.Repository;
+using SynkTask.DataAccess.Repository.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,12 @@ namespace SynkTask.DataAccess.IConfiguration
     public interface IUnitOfWork
     {
         IUserRepository Users { get; }
+        ICountryRepository Countries { get; }
+        INotificationRepository Notifications { get; }
+        ITeamLeadRepository TeamLeads { get; }
+        ITeamMemberRepository TeamMembers { get; }
+
+
         Task CompleteAsync();
     }
 }

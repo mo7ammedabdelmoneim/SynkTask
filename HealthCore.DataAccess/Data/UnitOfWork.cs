@@ -17,6 +17,10 @@ namespace SynkTask.DataAccess.Data
         private readonly ILoggerFactory loggerFactory;
 
         public IUserRepository Users { get;}
+        public ICountryRepository Countries { get;}
+        public INotificationRepository Notifications { get; }
+        ITeamLeadRepository TeamLeads { get; }
+        ITeamMemberRepository TeamMembers { get; }
 
         public UnitOfWork(ApplicationDbContext context, ILoggerFactory loggerFactory)
         {
@@ -27,6 +31,23 @@ namespace SynkTask.DataAccess.Data
                 context,
                 loggerFactory.CreateLogger<GenericRepository<ApplicationUser>>()
             );
+            Countries = new CountryRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<Country>>()
+            );
+            Notifications = new NotificationRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<Notification>>()
+            );
+            TeamMembers = new TeamMemberRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<TeamMember>>()
+            );
+            TeamLeads = new TeamLeadRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<TeamLead>>()
+            );
+
         }
 
 

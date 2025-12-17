@@ -12,7 +12,7 @@ namespace SynkTask.DataAccess.Repository.IRepository
         Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includedProperties = null);
         Task<T> GetAsync(Expression<Func<T, bool>>? filter = null, string? includedProperties = null);
         Task<bool> AddAsync(T entity);
-        Task<bool> DeleteAsync(T entity, string userId);
-        Task<bool> UpsertAsync(T entity);
+        bool Delete(T entity, string userId);
+        bool Update(T entity);
     }
 }
