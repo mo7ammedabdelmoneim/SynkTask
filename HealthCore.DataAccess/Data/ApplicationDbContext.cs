@@ -28,11 +28,5 @@ namespace SynkTask.DataAccess.Data
 
 
 
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-            builder.Entity<IdentityApplicationUser>()
-                    .HasKey(i => new { i.IdentityUserId, i.ApplicationUserId });
-        }
     }
 }

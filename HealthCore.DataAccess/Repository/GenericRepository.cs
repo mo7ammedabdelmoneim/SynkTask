@@ -39,7 +39,7 @@ namespace SynkTask.DataAccess.Repository
             }
         }
 
-        public bool Delete(T entity, string userId)
+        public bool Delete(T entity)
         {
             try
             {
