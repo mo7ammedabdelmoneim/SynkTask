@@ -16,6 +16,9 @@ namespace SynkTask.DataAccess.IConfiguration
         ITeamLeadRepository TeamLeads { get; }
         ITeamMemberRepository TeamMembers { get; }
         IIdentityApplicationUserRepository IdentityApplicationUsers { get; }
+        IProjectRepository Projects { get; }
+        IProjectTaskRepository ProjectTasks { get; }
+        ITodoRepository Todos { get; }
 
 
         Task CompleteAsync();

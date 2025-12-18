@@ -18,17 +18,11 @@ namespace SynkTask.API.Controllers
             this.unitOfWork = unitOfWork;
         }
 
-        [HttpGet("/Info/{teamLeadId:guid}")]
+        [HttpGet("Info/{teamLeadId:guid}")]
         [ProducesResponseType<ApiResponse<GetTeamLeadInfoResponseDto>>(200)]
         public async Task<IActionResult> GetteamLeadInfo(Guid teamLeadId)
         {
             var response = new ApiResponse<GetTeamLeadInfoResponseDto>();
-            if(teamLeadId == Guid.Empty)
-            {
-                response.Message = "Invalid Input";
-                response.Errors = new List<string>() { "TeamLeadId is a Must" };
-                return BadRequest(response);
-            }
 
             var teamLead = await unitOfWork.TeamLeads.GetAsync(l => l.Id == teamLeadId);
             if(teamLead == null)
@@ -52,6 +46,40 @@ namespace SynkTask.API.Controllers
             response.Success = true;
             response.Message = "TeamLead Info Retrieved Successfully";
             response.Data = teamLeadResponse;
+
+            return Ok(response);
+        }
+
+        [HttpGet("TaskMemers/{teamLeadId:guid}")]
+        [ProducesResponseType<ApiResponse<List<GetTeamMemberInfoResponseDto>>>(200)]
+        public async Task<IActionResult> GetTeamMemerForTeamLeadAsync(Guid teamLeadId)
+        {
+            var response = new ApiResponse<List<GetTeamMemberInfoResponseDto>>();
+
+            var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamLeadId == teamLeadId);
+            if (!members.Any())
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
+                return NotFound(response);
+            }
+
+            List<GetTeamMemberInfoResponseDto> membersResponse = members.Select(member => new GetTeamMemberInfoResponseDto
+            {
+                Id = member.Id,
+                FirstName = member.FirstName,
+                TeamLeadId = member.TeamLeadId,
+                Country = member.Country,
+                Email = member.Email,
+                LastName = member.LastName,
+                Role = member.Role,
+            }).ToList();
+
+
+            response.Success = true;
+            response.Message = "TeamMembers Retrieved Successfully";
+            response.Data = membersResponse;
 
             return Ok(response);
         }

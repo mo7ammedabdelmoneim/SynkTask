@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SynkTask.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using SynkTask.DataAccess.Data;
 namespace SynkTask.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217175007_UpdateProjectTable")]
+    partial class UpdateProjectTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -322,7 +325,7 @@ namespace SynkTask.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssignedMemberId")
+                    b.Property<Guid>("AssignedMemberId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
@@ -335,7 +338,7 @@ namespace SynkTask.DataAccess.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("Priority")
+                    b.Property<int>("Priority")
                         .HasColumnType("int");
 
                     b.Property<Guid>("ProjectId")
@@ -587,7 +590,9 @@ namespace SynkTask.DataAccess.Migrations
                 {
                     b.HasOne("SynkTask.Models.TeamMember", "AssignedMember")
                         .WithMany("ProjectTasks")
-                        .HasForeignKey("AssignedMemberId");
+                        .HasForeignKey("AssignedMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SynkTask.Models.Project", "Project")
                         .WithMany("Tasks")

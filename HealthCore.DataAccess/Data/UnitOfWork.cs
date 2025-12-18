@@ -22,6 +22,10 @@ namespace SynkTask.DataAccess.Data
         public ITeamLeadRepository TeamLeads { get; }
         public ITeamMemberRepository TeamMembers { get; }
         public IIdentityApplicationUserRepository IdentityApplicationUsers { get; }
+        public IProjectRepository Projects { get; }
+        public IProjectTaskRepository ProjectTasks { get; }
+        public ITodoRepository Todos { get; }
+
 
 
         public UnitOfWork(ApplicationDbContext context, ILoggerFactory loggerFactory)
@@ -52,6 +56,18 @@ namespace SynkTask.DataAccess.Data
             IdentityApplicationUsers = new IdentityApplicationUserRepository(
                 context,
                 loggerFactory.CreateLogger<GenericRepository<IdentityApplicationUser>>()
+            );
+            Projects = new ProjectRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<Project>>()
+            );
+            ProjectTasks = new ProjectTaskRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<ProjectTask>>()
+            );
+            Todos = new TodoRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<Todo>>()
             );
 
         }
