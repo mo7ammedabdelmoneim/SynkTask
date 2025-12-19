@@ -105,5 +105,7 @@ namespace SynkTask.API.Controllers
 
             return Ok(response);
         }
+
+       
     }
 }

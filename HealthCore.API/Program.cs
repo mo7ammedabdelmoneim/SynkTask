@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using SynkTask.API.Configurations;
 
 namespace SynkTask.API
 {
@@ -51,6 +52,10 @@ namespace SynkTask.API
                 options.Lockout.AllowedForNewUsers = true;
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
+            // Register Global Exception Handling 
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddProblemDetails(); 
+
 
             // Register the Cors Service
             builder.Services.AddCors(options =>
@@ -92,6 +97,8 @@ namespace SynkTask.API
             var app = builder.Build();
 
             await SeedRolesAsync(app);
+
+            app.UseExceptionHandler();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
