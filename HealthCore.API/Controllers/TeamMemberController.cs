@@ -39,8 +39,8 @@ namespace SynkTask.API.Controllers
                 LastName = teamMember.LastName,
                 Country = teamMember.Country,
                 Email = teamMember.Email,
-                Role = teamMember.Role,
-                TeamLeadId = teamMember.TeamLeadId,
+               // Role = teamMember.Role,
+                //TeamLeadId = teamMember.TeamLeadId,
             };
 
             response.Success = true;
@@ -77,7 +77,7 @@ namespace SynkTask.API.Controllers
                 return BadRequest(response);
             }
 
-            member.TeamLeadId = teamLead.Id;
+            //member.TeamLeadId = teamLead.Id;
             unitOfWork.TeamMembers.Update(member);
             await unitOfWork.CompleteAsync();
 

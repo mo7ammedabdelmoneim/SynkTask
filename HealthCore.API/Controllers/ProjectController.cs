@@ -121,7 +121,7 @@ namespace SynkTask.API.Controllers
                 TeamLeadId = task.TeamLeadId,
                 Description = task.Description,
                 IsCompleted = task.IsCompleted,
-                AssignedMemberId = task.AssignedMemberId,
+               // AssignedMemberId = task.AssignedMemberId,
                 FromDate = task.FromDate,
                 ToDate = task.ToDate,
                 Priority = (Priority)task.Priority,

@@ -40,7 +40,7 @@ namespace SynkTask.API.Controllers
                 LastName = teamLead.LastName,
                 Country = teamLead.Country,
                 Email = teamLead.Email,
-                Role = teamLead.Role,
+                ImageUrl = teamLead.ImageUrl
             };
 
             response.Success = true;
@@ -50,38 +50,45 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
-        [HttpGet("TaskMemers/{teamLeadId:guid}")]
-        [ProducesResponseType<ApiResponse<List<GetTeamMemberInfoResponseDto>>>(200)]
-        public async Task<IActionResult> GetTeamMemerForTeamLeadAsync(Guid teamLeadId)
+        [HttpGet("Dashboard/{teamLeadId:guid}")]
+        [ProducesResponseType<ApiResponse<GetTeamLeadInfoResponseDto>>(200)]
+        public async Task<IActionResult> GetTeamLeadDashboardData(Guid teamLeadId)
         {
-            var response = new ApiResponse<List<GetTeamMemberInfoResponseDto>>();
-
-            var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamLeadId == teamLeadId);
-            if (!members.Any())
-            {
-                response.Success = true;
-                response.Message = "No Data";
-                response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
-                return NotFound(response);
-            }
-
-            List<GetTeamMemberInfoResponseDto> membersResponse = members.Select(member => new GetTeamMemberInfoResponseDto
-            {
-                Id = member.Id,
-                FirstName = member.FirstName,
-                TeamLeadId = member.TeamLeadId,
-                Country = member.Country,
-                Email = member.Email,
-                LastName = member.LastName,
-                Role = member.Role,
-            }).ToList();
-
-
-            response.Success = true;
-            response.Message = "TeamMembers Retrieved Successfully";
-            response.Data = membersResponse;
-
-            return Ok(response);
+            
         }
+
+        //[HttpGet("TaskMemers/{teamLeadId:guid}")]
+        //[ProducesResponseType<ApiResponse<List<GetTeamMemberInfoResponseDto>>>(200)]
+        //public async Task<IActionResult> GetTeamMemerForTeamLeadAsync(Guid teamLeadId)
+        //{
+        //    var response = new ApiResponse<List<GetTeamMemberInfoResponseDto>>();
+
+        //    var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamLeadId == teamLeadId);
+        //    if (!members.Any())
+        //    {
+        //        response.Success = true;
+        //        response.Message = "No Data";
+        //        response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
+        //        return NotFound(response);
+        //    }
+
+        //    List<GetTeamMemberInfoResponseDto> membersResponse = members.Select(member => new GetTeamMemberInfoResponseDto
+        //    {
+        //        Id = member.Id,
+        //        FirstName = member.FirstName,
+        //        TeamLeadId = member.TeamLeadId,
+        //        Country = member.Country,
+        //        Email = member.Email,
+        //        LastName = member.LastName,
+        //        Role = member.Role,
+        //    }).ToList();
+
+
+        //    response.Success = true;
+        //    response.Message = "TeamMembers Retrieved Successfully";
+        //    response.Data = membersResponse;
+
+        //    return Ok(response);
+        //}
     }
 }

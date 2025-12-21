@@ -98,7 +98,7 @@ namespace SynkTask.API
 
             await SeedRolesAsync(app);
 
-            app.UseExceptionHandler();
+          //  app.UseExceptionHandler();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -108,6 +108,8 @@ namespace SynkTask.API
             }
 
             app.UseHttpsRedirection();
+
+            app.UseStaticFiles()  ;
 
             app.UseAuthorization();
 

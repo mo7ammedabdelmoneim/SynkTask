@@ -23,17 +23,12 @@ namespace SynkTask.Models
         [ForeignKey(nameof(TeamLeadId))]
         public TeamLead TeamLead { get; set; }
 
-        public DateTime FromDate { get; set; }
+        public DateTime FromDate { get; set; } = DateTime.Now;
         public DateTime ToDate { get; set; }
         public bool IsCompleted { get; set; } = false;
         public Priority? Priority { get; set; }
 
-        public Guid? AssignedMemberId { get; set; }
-
-        [ForeignKey(nameof(AssignedMemberId))]
-        public TeamMember AssignedMember { get; set; }
-
-
+        public IEnumerable<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();  
         public IEnumerable<Todo> Todos { get; set; } = new List<Todo>();
     }
 

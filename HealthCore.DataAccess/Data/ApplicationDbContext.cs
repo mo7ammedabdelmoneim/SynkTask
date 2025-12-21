@@ -18,6 +18,7 @@ namespace SynkTask.DataAccess.Data
         public virtual DbSet<ApplicationUser> Users {  get; set; }
         public virtual DbSet<Country> Countries {  get; set; }
         public virtual DbSet<TeamLead> TeamLeads {  get; set; }
+        public virtual DbSet<Team> Teams {  get; set; }
         public virtual DbSet<TeamMember> TeamMembers {  get; set; }
         public virtual DbSet<Project> Projects  {  get; set; }
         public virtual DbSet<ProjectTask> ProjectTasks {  get; set; }

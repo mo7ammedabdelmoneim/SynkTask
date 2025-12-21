@@ -89,7 +89,7 @@ namespace SynkTask.API.Controllers
                 Country = teamMember.Country,
                 Email = teamMember.Email,
                 ApplicationUser = teamMember.ApplicationUser,
-                Role = "TeamLead"
+                ImageUrl = teamMember.ImageUrl,
             };
             await unitOfWork.TeamLeads.AddAsync(newTeamLead);
             await unitOfWork.CompleteAsync();
@@ -113,7 +113,8 @@ namespace SynkTask.API.Controllers
                 FirstName = newTeamLead.FirstName,
                 LastName = newTeamLead.LastName,
                 Email = newTeamLead.Email,
-                NewId = newTeamLead.Id
+                NewId = newTeamLead.Id, 
+                ImageUrl = teamMember.ImageUrl
             };
 
             response.Success = true;
@@ -170,7 +171,7 @@ namespace SynkTask.API.Controllers
                 Country = teamLead.Country,
                 Email = teamLead.Email,
                 ApplicationUser = teamLead.ApplicationUser,
-                Role = "TeamMember"
+                ImageUrl = teamLead.ImageUrl,
             };
             await unitOfWork.TeamMembers.AddAsync(newTeamMember);
             await unitOfWork.CompleteAsync();
@@ -194,7 +195,8 @@ namespace SynkTask.API.Controllers
                 FirstName = newTeamMember.FirstName,
                 LastName = newTeamMember.LastName,
                 Email = newTeamMember.Email,
-                NewId = newTeamMember.Id
+                NewId = newTeamMember.Id,
+                ImageUrl = newTeamMember.ImageUrl
             };
 
             response.Success = true;

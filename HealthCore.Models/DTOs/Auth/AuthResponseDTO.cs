@@ -14,6 +14,7 @@ namespace SynkTask.Models.DTOs.Auth
         public string Email { get; set; }
         public IList<string>? Roles { get; set; }
         public Guid? UserId { get; set; }
+        public string? ImageUrl { get; set; }
 
 
         [JsonIgnore]

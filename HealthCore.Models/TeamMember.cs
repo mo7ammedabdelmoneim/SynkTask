@@ -14,7 +14,8 @@ namespace SynkTask.Models
         public string LastName { get; set; }
         public string Email { get; set; }
         public string Country { get; set; }
-        public string Role { get; set; } = "TEAMMEMBER";
+        //public string Role { get; set; } = "TEAMMEMBER";
+        public string? ImageUrl { get; set; }
 
 
 
@@ -23,12 +24,11 @@ namespace SynkTask.Models
         [ForeignKey(nameof(ApplicationUserId))]
         public ApplicationUser ApplicationUser { get; set; }
                      
-        public Guid? TeamLeadId { get; set; }
+        public Guid? TeamId { get; set; }
 
-        [ForeignKey(nameof(TeamLeadId))]
-        public TeamLead TeamLead { get; set; }
+        [ForeignKey(nameof(TeamId))]
+        public Team Team { get; set; }
 
-        public  IEnumerable<Project> Projects { get; set; } = new List<Project>();
         public  IEnumerable<ProjectTask> ProjectTasks { get; set; } = new List<ProjectTask>();
     }
 }

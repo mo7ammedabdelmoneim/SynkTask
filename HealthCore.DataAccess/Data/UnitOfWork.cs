@@ -20,6 +20,7 @@ namespace SynkTask.DataAccess.Data
         public ICountryRepository Countries { get;}
         public INotificationRepository Notifications { get; }
         public ITeamLeadRepository TeamLeads { get; }
+        public ITeamRepository Teams { get; }
         public ITeamMemberRepository TeamMembers { get; }
         public IIdentityApplicationUserRepository IdentityApplicationUsers { get; }
         public IProjectRepository Projects { get; }
@@ -68,6 +69,10 @@ namespace SynkTask.DataAccess.Data
             Todos = new TodoRepository(
                 context,
                 loggerFactory.CreateLogger<GenericRepository<Todo>>()
+            );
+            Teams = new TeamRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<Team>>()
             );
 
         }

@@ -12,5 +12,6 @@ namespace SynkTask.Models.DTOs
         public string LastName { get; set; }
         public string Email { get; set; }
         public Guid NewId { get; set; }
+        public string? ImageUrl  { get; set; }
     }
 }

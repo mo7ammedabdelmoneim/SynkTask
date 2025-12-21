@@ -14,7 +14,8 @@ namespace SynkTask.Models
         public string LastName { get; set; }
         public string Email { get; set; } 
         public string Country { get; set; }
-        public string Role { get; set; } = "TEAMLEAD";
+        //public string Role { get; set; } = "TEAMLEAD";
+        public string? ImageUrl { get; set; } 
 
         public string ApplicationUserId { get; set; }
 

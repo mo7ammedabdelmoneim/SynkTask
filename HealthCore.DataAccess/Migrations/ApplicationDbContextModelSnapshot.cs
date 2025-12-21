@@ -155,19 +155,19 @@ namespace SynkTask.DataAccess.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ProjectTeamMember", b =>
+            modelBuilder.Entity("ProjectTaskTeamMember", b =>
                 {
-                    b.Property<Guid>("MembersId")
+                    b.Property<Guid>("AssignedMembersId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ProjectsId")
+                    b.Property<Guid>("ProjectTasksId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("MembersId", "ProjectsId");
+                    b.HasKey("AssignedMembersId", "ProjectTasksId");
 
-                    b.HasIndex("ProjectsId");
+                    b.HasIndex("ProjectTasksId");
 
-                    b.ToTable("ProjectTeamMember");
+                    b.ToTable("ProjectTaskTeamMember");
                 });
 
             modelBuilder.Entity("SynkTask.Models.ApplicationUser", b =>
@@ -322,9 +322,6 @@ namespace SynkTask.DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssignedMemberId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -352,8 +349,6 @@ namespace SynkTask.DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AssignedMemberId");
 
                     b.HasIndex("ProjectId");
 
@@ -392,6 +387,29 @@ namespace SynkTask.DataAccess.Migrations
                     b.ToTable("RefreshToken");
                 });
 
+            modelBuilder.Entity("SynkTask.Models.Team", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TeamIdentifier")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TeamLeadId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamLeadId");
+
+                    b.ToTable("Teams");
+                });
+
             modelBuilder.Entity("SynkTask.Models.TeamLead", b =>
                 {
                     b.Property<Guid>("Id")
@@ -414,11 +432,10 @@ namespace SynkTask.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("LastName")
-                        .IsRequired()
+                    b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
+                    b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -451,22 +468,21 @@ namespace SynkTask.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("TeamLeadId")
+                    b.Property<Guid?>("TeamId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.HasIndex("TeamLeadId");
+                    b.HasIndex("TeamId");
 
                     b.ToTable("TeamMembers");
                 });
@@ -557,17 +573,17 @@ namespace SynkTask.DataAccess.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ProjectTeamMember", b =>
+            modelBuilder.Entity("ProjectTaskTeamMember", b =>
                 {
                     b.HasOne("SynkTask.Models.TeamMember", null)
                         .WithMany()
-                        .HasForeignKey("MembersId")
+                        .HasForeignKey("AssignedMembersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SynkTask.Models.Project", null)
+                    b.HasOne("SynkTask.Models.ProjectTask", null)
                         .WithMany()
-                        .HasForeignKey("ProjectsId")
+                        .HasForeignKey("ProjectTasksId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -585,10 +601,6 @@ namespace SynkTask.DataAccess.Migrations
 
             modelBuilder.Entity("SynkTask.Models.ProjectTask", b =>
                 {
-                    b.HasOne("SynkTask.Models.TeamMember", "AssignedMember")
-                        .WithMany("ProjectTasks")
-                        .HasForeignKey("AssignedMemberId");
-
                     b.HasOne("SynkTask.Models.Project", "Project")
                         .WithMany("Tasks")
                         .HasForeignKey("ProjectId")
@@ -600,8 +612,6 @@ namespace SynkTask.DataAccess.Migrations
                         .HasForeignKey("TeamLeadId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("AssignedMember");
 
                     b.Navigation("Project");
 
@@ -617,6 +627,15 @@ namespace SynkTask.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SynkTask.Models.Team", b =>
+                {
+                    b.HasOne("SynkTask.Models.TeamLead", "TeamLead")
+                        .WithMany()
+                        .HasForeignKey("TeamLeadId");
+
+                    b.Navigation("TeamLead");
                 });
 
             modelBuilder.Entity("SynkTask.Models.TeamLead", b =>
@@ -638,13 +657,13 @@ namespace SynkTask.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SynkTask.Models.TeamLead", "TeamLead")
-                        .WithMany()
-                        .HasForeignKey("TeamLeadId");
+                    b.HasOne("SynkTask.Models.Team", "Team")
+                        .WithMany("Members")
+                        .HasForeignKey("TeamId");
 
                     b.Navigation("ApplicationUser");
 
-                    b.Navigation("TeamLead");
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Todo", b =>
@@ -681,9 +700,9 @@ namespace SynkTask.DataAccess.Migrations
                     b.Navigation("Todos");
                 });
 
-            modelBuilder.Entity("SynkTask.Models.TeamMember", b =>
+            modelBuilder.Entity("SynkTask.Models.Team", b =>
                 {
-                    b.Navigation("ProjectTasks");
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }

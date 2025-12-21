@@ -18,6 +18,7 @@ using SynkTask.Models.DTOs;
 using Azure;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 
 namespace SynkTask.API.Controllers
 {
@@ -58,13 +59,22 @@ namespace SynkTask.API.Controllers
             var user = await userManager.FindByEmailAsync(registerDTO.Email);
             if (user != null)
             {
-                response.Message = "Email already exists";
+                response.Message = "Invalid input data";
+                response.Errors = new List<string> { "Email already exists" };
+                return BadRequest(response);
+            }
+
+            var team = await unitOfWork.Teams.GetAsync(t => t.TeamIdentifier == registerDTO.TeamIdentifier);
+            if (team == null)
+            {
+                response.Message = "Invalid input data";
+                response.Errors = new List<string> { "Invalid TeamIdentifier" };
                 return BadRequest(response);
             }
 
             var newUser = new ApplicationUser
             {
-                UserName = registerDTO.Email,
+                UserName = $"{registerDTO.FirstName}.{registerDTO.LastName}",
                 Email = registerDTO.Email,
                 EmailConfirmed = true
             };
@@ -91,6 +101,7 @@ namespace SynkTask.API.Controllers
                 LastName = registerDTO.LastName,
                 Email = registerDTO.Email,
                 Country = registerDTO.Country,
+                TeamId = team.Id,
                 ApplicationUserId = newUser.Id
             };
             await unitOfWork.TeamMembers.AddAsync(member);
@@ -112,7 +123,59 @@ namespace SynkTask.API.Controllers
                 SetRefreshTokenInCookie(data.RefreshToken, data.RefreshTokenExpiration);
             return Ok(response);
         }
-  
+
+
+        [HttpPost("profileImage/{userId}")]
+        [ProducesResponseType(typeof(string), 200)]
+        public async Task<IActionResult> UploadImage(Guid userId, IFormFile image)
+        {
+            var response = new ApiResponse<string>() { Message = "Invalid input data" };
+
+            var user = await unitOfWork.TeamMembers.GetAsync(m => m.Id == userId);
+            if(user == null)
+            {
+                response.Errors = new List<string> { "Invalid UserId" };
+                return BadRequest(response);
+            }
+
+            List<string> allowedExtensions = new List<string>() { ".png", ".jpg", ".jpeg" };
+            const int maxSize = 2 * 1024 * 1024;
+
+            var extension = Path.GetExtension(image.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+            {
+                response.Errors = new List<string> { "The extension of file is not valid, Just png, jpg and jpeg are allowed" };
+                return BadRequest(response);
+            }
+
+            if (image.Length > maxSize || image.Length == 0)
+            {
+                response.Errors = new List<string> { $"The size of file is too large, {maxSize} is the maximum size" };
+                return BadRequest(response);
+            }
+        
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "userProfileImages");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+
+            var saveFileName = Path.GetFileNameWithoutExtension(image.FileName);
+            var fileName = $"{Guid.NewGuid()}_{saveFileName}{extension}";
+
+            var filePath = Path.Combine(folderPath, fileName);
+
+            using FileStream fs = new FileStream(filePath, FileMode.Create);
+            image.CopyTo(fs);
+            var imageUrl = $"userProfileImages/{fileName}";
+
+            user.ImageUrl = imageUrl;
+            await unitOfWork.CompleteAsync();
+
+            response.Success = true;
+            response.Message = "Image Uploaded Successfully";
+            response.Data = $"ImageUrl : {imageUrl}";
+            return Ok(response);
+        }
+
         [HttpPost("Login")]
         [ProducesResponseType(typeof(AuthResponseDTO), 200)]
         public async Task<IActionResult> Login(LoginDTO loginDto)
@@ -157,7 +220,7 @@ namespace SynkTask.API.Controllers
         }
 
         [HttpGet("RefreshToken")]
-        [ProducesResponseType(typeof(AuthResponseDTO), 200)]
+        [ProducesResponseType(typeof(AuthResponseDTO), 200)] 
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -180,6 +243,18 @@ namespace SynkTask.API.Controllers
                 Data = refreshTokenResult
             };
             return Ok(response);
+        }
+
+        [HttpGet("crateteam")]
+        public async Task<IActionResult> CreateAsync(string teamId)
+        {
+            await unitOfWork.Teams.AddAsync(new Team
+            {
+                TeamIdentifier = teamId,CreatedAt = DateTime.UtcNow,
+            });
+            await unitOfWork.CompleteAsync();
+
+            return Ok();
         }
         
 
@@ -221,7 +296,7 @@ namespace SynkTask.API.Controllers
                 UserName = user.UserName,
                 Email = user.Email,
                 Roles = roles,
-                UserId = appUsrId
+                UserId = appUsrId,
             };
 
             if (user.RefreshTokens.Any(t => t.IsActive))

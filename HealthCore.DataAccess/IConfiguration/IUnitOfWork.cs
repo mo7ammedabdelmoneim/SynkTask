@@ -14,6 +14,7 @@ namespace SynkTask.DataAccess.IConfiguration
         ICountryRepository Countries { get; }
         INotificationRepository Notifications { get; }
         ITeamLeadRepository TeamLeads { get; }
+        ITeamRepository Teams { get; }
         ITeamMemberRepository TeamMembers { get; }
         IIdentityApplicationUserRepository IdentityApplicationUsers { get; }
         IProjectRepository Projects { get; }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SynkTask.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -60,6 +60,18 @@ namespace SynkTask.DataAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Countries", x => x.Name);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IdentityApplicationUsers",
+                columns: table => new
+                {
+                    IdentityUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IdentityApplicationUsers", x => x.IdentityUserId);
                 });
 
             migrationBuilder.CreateTable(
@@ -215,7 +227,6 @@ namespace SynkTask.DataAccess.Migrations
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Country = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
@@ -230,23 +241,22 @@ namespace SynkTask.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Projects",
+                name: "Teams",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    TeamLeadId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TeamIdentifier = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TeamLeadId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Projects", x => x.Id);
+                    table.PrimaryKey("PK_Teams", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Projects_TeamLeads_TeamLeadId",
+                        name: "FK_Teams_TeamLeads_TeamLeadId",
                         column: x => x.TeamLeadId,
                         principalTable: "TeamLeads",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -257,9 +267,9 @@ namespace SynkTask.DataAccess.Migrations
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TeamLeadId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -271,11 +281,31 @@ namespace SynkTask.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TeamMembers_TeamLeads_TeamLeadId",
+                        name: "FK_TeamMembers_Teams_TeamId",
+                        column: x => x.TeamId,
+                        principalTable: "Teams",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Projects",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    TeamLeadId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Projects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Projects_TeamLeads_TeamLeadId",
                         column: x => x.TeamLeadId,
                         principalTable: "TeamLeads",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -290,8 +320,7 @@ namespace SynkTask.DataAccess.Migrations
                     FromDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ToDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsCompleted = table.Column<bool>(type: "bit", nullable: false),
-                    Priority = table.Column<int>(type: "int", nullable: false),
-                    AssignedMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Priority = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -308,33 +337,27 @@ namespace SynkTask.DataAccess.Migrations
                         principalTable: "TeamLeads",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
-                    table.ForeignKey(
-                        name: "FK_ProjectTasks_TeamMembers_AssignedMemberId",
-                        column: x => x.AssignedMemberId,
-                        principalTable: "TeamMembers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProjectTeamMember",
+                name: "ProjectTaskTeamMember",
                 columns: table => new
                 {
-                    MembersId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProjectsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    AssignedMembersId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProjectTasksId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjectTeamMember", x => new { x.MembersId, x.ProjectsId });
+                    table.PrimaryKey("PK_ProjectTaskTeamMember", x => new { x.AssignedMembersId, x.ProjectTasksId });
                     table.ForeignKey(
-                        name: "FK_ProjectTeamMember_Projects_ProjectsId",
-                        column: x => x.ProjectsId,
-                        principalTable: "Projects",
+                        name: "FK_ProjectTaskTeamMember_ProjectTasks_ProjectTasksId",
+                        column: x => x.ProjectTasksId,
+                        principalTable: "ProjectTasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProjectTeamMember_TeamMembers_MembersId",
-                        column: x => x.MembersId,
+                        name: "FK_ProjectTaskTeamMember_TeamMembers_AssignedMembersId",
+                        column: x => x.AssignedMembersId,
                         principalTable: "TeamMembers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.NoAction);
@@ -414,11 +437,6 @@ namespace SynkTask.DataAccess.Migrations
                 column: "TeamLeadId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectTasks_AssignedMemberId",
-                table: "ProjectTasks",
-                column: "AssignedMemberId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ProjectTasks_ProjectId",
                 table: "ProjectTasks",
                 column: "ProjectId");
@@ -429,9 +447,9 @@ namespace SynkTask.DataAccess.Migrations
                 column: "TeamLeadId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectTeamMember_ProjectsId",
-                table: "ProjectTeamMember",
-                column: "ProjectsId");
+                name: "IX_ProjectTaskTeamMember_ProjectTasksId",
+                table: "ProjectTaskTeamMember",
+                column: "ProjectTasksId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshToken_UserId",
@@ -449,8 +467,13 @@ namespace SynkTask.DataAccess.Migrations
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TeamMembers_TeamLeadId",
+                name: "IX_TeamMembers_TeamId",
                 table: "TeamMembers",
+                column: "TeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Teams_TeamLeadId",
+                table: "Teams",
                 column: "TeamLeadId");
 
             migrationBuilder.CreateIndex(
@@ -486,10 +509,13 @@ namespace SynkTask.DataAccess.Migrations
                 name: "Countries");
 
             migrationBuilder.DropTable(
+                name: "IdentityApplicationUsers");
+
+            migrationBuilder.DropTable(
                 name: "Notifications");
 
             migrationBuilder.DropTable(
-                name: "ProjectTeamMember");
+                name: "ProjectTaskTeamMember");
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
@@ -508,6 +534,9 @@ namespace SynkTask.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "TeamMembers");
+
+            migrationBuilder.DropTable(
+                name: "Teams");
 
             migrationBuilder.DropTable(
                 name: "TeamLeads");
