@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace SynkTask.Models.DTOs
 {
-    public class GetProjectTaskInfoResponseDto
+    public class GetTaskInfoResponseDto
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
@@ -16,9 +15,12 @@ namespace SynkTask.Models.DTOs
         public Guid TeamLeadId { get; set; }
         public DateTime FromDate { get; set; }
         public DateTime DueDate { get; set; }
-        public string Status { get; set; } 
+        public string Status { get; set; }
         public string Priority { get; set; }
 
-        public List<GetTaskMemberDto> AssignedMemebers { get; set; } = new List<GetTaskMemberDto>();
+        public List<string> AssignedMemebersPicture { get; set; } = new List<string>();
+        public List<GetTodoInfoResponseDto> Todos { get; set; } = new List<GetTodoInfoResponseDto>();
+
+
     }
 }

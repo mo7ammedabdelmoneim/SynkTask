@@ -19,7 +19,7 @@ namespace SynkTask.API.Controllers
 
         [HttpPost]
         [ProducesResponseType<ApiResponse<GetTodoInfoResponseDto>>(200)]
-        public async Task<IActionResult> AddTodoAsync(CreateTodoDto todoDto)
+        public async Task<IActionResult> CreateTodoAsync(CreateTodoDto todoDto)
         {
             var response = new ApiResponse<GetTodoInfoResponseDto>();
 
@@ -73,7 +73,6 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
-
         [HttpGet("Info/{todoId:guid}")]
         [ProducesResponseType<ApiResponse<GetTodoInfoResponseDto>>(200)]
         public async Task<IActionResult> GetTodoInfo(Guid todoId)
@@ -106,6 +105,26 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
-       
+        [HttpGet("UpdateStatus/{todoId:guid}/{isCompleted:bool}")]
+        public async Task<IActionResult> UpdateTaskStatus(Guid todoId, bool isCompleted)
+        {
+            var response = new ApiResponse<string>();
+            var todo = await unitOfWork.Todos.GetAsync(t => t.Id == todoId);
+            if (todo == null)
+            {
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "TodoId is Wrong" };
+                return BadRequest(response);
+            }
+
+            todo.IsCompleted = isCompleted;
+            await unitOfWork.CompleteAsync();
+
+            response.Success = true;
+            response.Message = "Todo Status Updated Sucssfully";
+            return Ok(response);
+        }
+
+
     }
 }

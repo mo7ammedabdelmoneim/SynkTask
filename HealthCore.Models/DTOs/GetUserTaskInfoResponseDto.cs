@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SynkTask.Models.DTOs
 {
-    public class GetTeamLeadTaskInfoResponseDto
+    public class GetUserTaskInfoResponseDto
     {
         public Guid Id { get; set; }
         public string Title { get; set; }

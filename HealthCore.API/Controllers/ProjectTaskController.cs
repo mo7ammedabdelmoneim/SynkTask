@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SynkTask.DataAccess.IConfiguration;
 using SynkTask.Models;
@@ -15,6 +16,50 @@ namespace SynkTask.API.Controllers
         public ProjectTaskController(IUnitOfWork unitOfWork)
         {
             this.unitOfWork = unitOfWork;
+        }
+
+        [HttpGet("Info/{taskId:guid}")]
+        public async Task<IActionResult> GetTaskInfo(Guid taskId)
+        {
+            var response = new ApiResponse<GetTaskInfoResponseDto>();
+
+            var task = await unitOfWork.ProjectTasks.GetAsync(t => t.Id == taskId, includedProperties: "AssignedMembers,Todos");
+            if (task == null)
+            {
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "TaskId is Wrong" };
+                return BadRequest(response);
+            }
+
+            var taskResponse = new GetTaskInfoResponseDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                DueDate = task.ToDate,
+                FromDate = task.FromDate,
+                Priority = task.Priority,
+                Status = task.Status,
+                ProjectId = task.ProjectId,
+                TeamLeadId = task.TeamLeadId,
+                AssignedMemebersPicture = task.AssignedMembers.Select(m => m.ImageUrl).ToList(),
+                Todos = task.Todos.Select(t=>new GetTodoInfoResponseDto
+                {
+                    Id = t.Id,
+                    Description = t.Description,
+                    Title = t.Title,
+                    Created = t.Created,
+                    IsCompleted = t.IsCompleted,
+                    TaskId = t.TaskId,
+                    TeamMemberId = t.TeamMemberId
+                }).ToList()
+            };
+
+            response.Success = true;
+            response.Message = "Task Info Retrieved Successfully";
+            response.Data = taskResponse;
+
+            return Ok(response);
         }
 
         [HttpPost]
@@ -189,6 +234,25 @@ namespace SynkTask.API.Controllers
             return NoContent();
         }
 
+        [HttpPut("UpdateStatus")]
+        public async Task<IActionResult> UpdateTaskStatus(UpdateTaskStatusDto taskDto)
+        {
+            var response = new ApiResponse<string>();
+            var task = await unitOfWork.ProjectTasks.GetAsync(t => t.Id == taskDto.TaskId);
+            if (task == null)
+            {
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "TaskId is Wrong" };
+                return BadRequest(response);
+            }
+
+            task.Status = taskDto.Status;
+            await unitOfWork.CompleteAsync();
+
+            response.Success = true;
+            response.Message = "Task Status Updated Sucssfully";
+            return Ok(response);
+        }
 
         [HttpGet("Todos/{projectTaskId:guid}")]
         [ProducesResponseType<ApiResponse<List<GetTodoInfoResponseDto>>>(200)]

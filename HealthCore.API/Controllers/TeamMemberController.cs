@@ -34,13 +34,12 @@ namespace SynkTask.API.Controllers
 
             var teamMemberResponse = new GetTeamMemberInfoResponseDto
             {
-                Id = teamMember.Id,
+                Id = teamMemberId,
                 FirstName = teamMember.FirstName,
                 LastName = teamMember.LastName,
                 Country = teamMember.Country,
                 Email = teamMember.Email,
-               // Role = teamMember.Role,
-                //TeamLeadId = teamMember.TeamLeadId,
+                ImageUrl = teamMember.ImageUrl
             };
 
             response.Success = true;
@@ -51,40 +50,103 @@ namespace SynkTask.API.Controllers
         }
 
 
-        [HttpPost("AssignToTeamLead")]
-        public async Task<IActionResult> AssignTeamMemberToTeamLead(AssignMemberDto memberDto)
+        [HttpGet("Dashboard/{teamMemberId:guid}")]
+        [ProducesResponseType<ApiResponse<GetUserDashboardDataResponseDto>>(200)]
+        public async Task<IActionResult> GetTeamMemberDashboardData(Guid teamMemberId)
         {
-            var response = new ApiResponse<string>();
+            var response = new ApiResponse<GetUserDashboardDataResponseDto>();
 
-            if (!ModelState.IsValid)
+            var teamMember = await unitOfWork.TeamMembers.GetAsync(l => l.Id == teamMemberId, includedProperties: "ProjectTasks");
+            if (teamMember == null)
             {
-                response.Message = "Invalid input data";
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "TeamMemberId is Wrong" };
                 return BadRequest(response);
             }
 
-            var teamLead = await unitOfWork.TeamLeads.GetAsync(t => t.Id == memberDto.TeamLeadId);
-            var member = await unitOfWork.TeamMembers.GetAsync(m => m.Id == memberDto.TeamMemberId);
-
-            if(teamLead == null || member == null)
+            var recentTasks = teamMember.ProjectTasks.OrderByDescending(t => t.FromDate).Select(t => new RecentTasksDto
             {
-                response.Message = "Invalid input data";
-                response.Errors = new List<string> { "TeamLeadId or TeamMemberId is Wrong" };
-                return BadRequest(response);
-            }
+                Title = t.Title,
+                CreatedAt = t.FromDate,
+                Status = t.Status,
+                Priority = t.Priority
+            }).ToList();
 
-            //member.TeamLeadId = teamLead.Id;
-            unitOfWork.TeamMembers.Update(member);
-            await unitOfWork.CompleteAsync();
+            int totalTasks = teamMember.ProjectTasks.Count();
+            int pendingTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "pending");
+            int inProgressTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "in progress");
+            int completedTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "completed");
+
+            // Task Priority
+            int lowTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "low");
+            int mediumTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "meduim");
+            int highTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "high");
+
+            var data = new GetUserDashboardDataResponseDto
+            {
+                TotalTasks = totalTasks,
+                CompletedTasks = completedTasks,
+                PendingTasks = pendingTasks,
+                InProgressTasks = inProgressTasks,
+                HighTasks = highTasks,
+                LowTasks = lowTasks,
+                MediumTasks = mediumTasks,
+                RecentTasks = recentTasks,
+            };
 
             response.Success = true;
-            response.Message = "TeamMember Assigned successfully";
+            response.Message = "TeamMember Dashboard Data Retreived Successfully";
+            response.Data = data;
+
             return Ok(response);
         }
+
+
+        [HttpGet("Tasks/{teamMemberId:guid}")]
+        [ProducesResponseType<ApiResponse<List<GetTeamMemberOfTeamLeadResponseDto>>>(200)]
+        public async Task<IActionResult> GetTeamMemberTasksAsync(Guid teamMemberId)
+        {
+            var response = new ApiResponse<List<GetUserTaskInfoResponseDto>>();
+
+            var teamMember = await unitOfWork.TeamMembers.GetTeamMemberWithTasksAsync(teamMemberId);
+            if (teamMember == null)
+            {
+                response.Success = false;
+                response.Message = "Invalid Input Data";
+                response.Errors = new List<string>() { "TeamMemberId is wrong" };
+                return BadRequest(response);
+            }
+            if (!teamMember.ProjectTasks.Any())
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "No Tasks For This TeamMember" };
+                return NotFound(response);
+            }
+
+            List<GetUserTaskInfoResponseDto> tasksResponse = teamMember.ProjectTasks.Select(task => new GetUserTaskInfoResponseDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Priority = task.Priority,
+                Description = task.Description,
+                Status = task.Status,
+                FromDate = task.FromDate,
+                DueDate = task.ToDate,
+                AssignedMembersPicture = task.AssignedMembers.Select(m => m.ImageUrl).ToList(),
+                Todos = task.Todos.Count(),
+                CompletedTodos = task.Todos.Count(t => t.IsCompleted)
+            }).OrderBy(t => t.DueDate).ToList();
+
+            response.Success = true;
+            response.Message = "TeamMember Tasks Retrieved Successfully";
+            response.Data = tasksResponse;
+
+            return Ok(response);
+        }
+
+        
+
 
     }
 }

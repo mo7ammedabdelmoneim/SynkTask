@@ -52,10 +52,10 @@ namespace SynkTask.API.Controllers
 
 
         [HttpGet("Dashboard/{teamLeadId:guid}")]
-        [ProducesResponseType<ApiResponse<GetTeamLeadDashboardDataResponseDto>>(200)]
+        [ProducesResponseType<ApiResponse<GetUserDashboardDataResponseDto>>(200)]
         public async Task<IActionResult> GetTeamLeadDashboardData(Guid teamLeadId)
         {
-            var response = new ApiResponse<GetTeamLeadDashboardDataResponseDto>();
+            var response = new ApiResponse<GetUserDashboardDataResponseDto>();
 
             var teamLead = await unitOfWork.TeamLeads.GetAsync(l => l.Id == teamLeadId);
             if (teamLead == null)
@@ -84,7 +84,7 @@ namespace SynkTask.API.Controllers
             int mediumTasks = tasks.Count(t => t.Priority?.ToLower() == "meduim");
             int highTasks = tasks.Count(t => t.Priority?.ToLower() == "high");
 
-            var data = new GetTeamLeadDashboardDataResponseDto
+            var data = new GetUserDashboardDataResponseDto
             {
                 TotalTasks = totalTasks,
                 CompletedTasks = completedTasks,
@@ -140,10 +140,10 @@ namespace SynkTask.API.Controllers
         
         
         [HttpGet("Tasks/{teamLeadId:guid}")]
-        [ProducesResponseType<ApiResponse<List<GetTeamMemberOfTeamLeadResponseDto>>>(200)]
+        [ProducesResponseType<ApiResponse<List<GetUserTaskInfoResponseDto>>>(200)]
         public async Task<IActionResult> GetTeamLeadTasksAsync(Guid teamLeadId)
         {
-            var response = new ApiResponse<List<GetTeamLeadTaskInfoResponseDto>>();
+            var response = new ApiResponse<List<GetUserTaskInfoResponseDto>>();
 
             var tasks = await unitOfWork.ProjectTasks.GetAllAsync(p => p.TeamLeadId == teamLeadId, includedProperties: "AssignedMembers,Todos");
             if (!tasks.Any())
@@ -154,7 +154,7 @@ namespace SynkTask.API.Controllers
                 return NotFound(response);
             }
 
-            List<GetTeamLeadTaskInfoResponseDto> tasksResponse = tasks.Select(task => new GetTeamLeadTaskInfoResponseDto
+            List<GetUserTaskInfoResponseDto> tasksResponse = tasks.Select(task => new GetUserTaskInfoResponseDto
             {
                 Id = task.Id,
                 Title = task.Title,

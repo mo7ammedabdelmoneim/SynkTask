@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SynkTask.DataAccess.Repository.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace SynkTask.DataAccess.Repository
 {
@@ -16,6 +17,13 @@ namespace SynkTask.DataAccess.Repository
              ApplicationDbContext context,
              ILogger<GenericRepository<TeamMember>> logger) : base(context, logger)
         {
+        }
+
+        public async Task<TeamMember> GetTeamMemberWithTasksAsync(Guid teamMemberId)
+        {
+            return await context.TeamMembers.Include(m => m.ProjectTasks)
+                                            .ThenInclude(t => t.Todos).
+                                            FirstOrDefaultAsync(m => m.Id == teamMemberId);
         }
 
     }

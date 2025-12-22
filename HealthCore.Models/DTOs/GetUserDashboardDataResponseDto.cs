@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SynkTask.Models.DTOs
 {
-    public class GetTeamLeadDashboardDataResponseDto
+    public class GetUserDashboardDataResponseDto
     {
         // Task Status
         public int TotalTasks { get; set; }
