@@ -97,41 +97,44 @@ namespace SynkTask.API.Controllers
 
             return Ok(response);
         }
-        
-        
+
+
         [HttpGet("Tasks/{projectId:guid}")]
-        [ProducesResponseType<ApiResponse<List<GetProjectTaskInfoResponseDto>>>(200)]
-        public async Task<IActionResult> GetProjectTasksAsync(Guid projectId)
+        [ProducesResponseType<ApiResponse<GetProjectTaskInfoResponseDto>>(200)]
+        public async Task<IActionResult> GetProjectTasksInfoAsync(Guid projectTaskId)
         {
-            var response = new ApiResponse<List<GetProjectTaskInfoResponseDto>>();
-            
-            var Tasks = await unitOfWork.ProjectTasks.GetAllAsync(p => p.ProjectId == projectId);
-            if (!Tasks.Any())
+            var response = new ApiResponse<GetProjectTaskInfoResponseDto>();
+
+            var projectTask = await unitOfWork.ProjectTasks.GetAsync(p => p.Id == projectTaskId, includedProperties: "AssignedMembers");
+            if (projectTask == null)
             {
-                response.Success = true;
-                response.Message = "No Data";
-                response.Errors = new List<string>() { "No Tasks For This Project" };
-                return NotFound(response);
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "ProjectTaskId is Wrong" };
+                return BadRequest(response);
             }
 
-            List<GetProjectTaskInfoResponseDto> projectResponse = Tasks.Select(task => new GetProjectTaskInfoResponseDto
+            var projectTaskResponse = new GetProjectTaskInfoResponseDto
             {
-                Id = task.Id,
-                Title = task.Title,
-                TeamLeadId = task.TeamLeadId,
-                Description = task.Description,
-                IsCompleted = task.IsCompleted,
-               // AssignedMemberId = task.AssignedMemberId,
-                FromDate = task.FromDate,
-                ToDate = task.ToDate,
-                Priority = (Priority)task.Priority,
-                ProjectId = projectId,
-            }).ToList();
-            
+                Title = projectTask.Title,
+                Description = projectTask.Description,
+                TeamLeadId = projectTask.TeamLeadId,
+                ProjectId = projectTask.ProjectId,
+                FromDate = projectTask.FromDate,
+                DueDate = projectTask.ToDate,
+                Priority = projectTask?.Priority,
+                Status = projectTask?.Status,
+                AssignedMemebers = projectTask.AssignedMembers.Select(m => new GetTaskMemberDto
+                {
+                    MemberId = m.Id,
+                    MemberName = m.FirstName,
+                    Email = m.Email,
+                    ImageUrl = m.ImageUrl
+                }).ToList()
+            };
 
             response.Success = true;
-            response.Message = "Project Tasks Retrieved Successfully";
-            response.Data = projectResponse;
+            response.Message = "Project Task Info Retrieved Successfully";
+            response.Data = projectTaskResponse;
 
             return Ok(response);
         }

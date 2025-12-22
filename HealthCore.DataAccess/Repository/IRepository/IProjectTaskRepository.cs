@@ -9,5 +9,6 @@ namespace SynkTask.DataAccess.Repository.IRepository
 {
     public interface IProjectTaskRepository : IGenericRepository<ProjectTask>
     {
+        Task ResetAssignedMembersAsync(Guid taskId);
     }
 }

@@ -39,17 +39,15 @@ namespace SynkTask.DataAccess.Repository
             }
         }
 
-        public bool Delete(T entity)
+        public async Task Delete(T entity)
         {
             try
             {
                 dbSet.Remove(entity);
-                return true;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Delete Error in {typeof(T).Name}");
-                return false;
             }
         }
 

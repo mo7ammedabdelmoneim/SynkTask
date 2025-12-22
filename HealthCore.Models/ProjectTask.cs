@@ -25,17 +25,10 @@ namespace SynkTask.Models
 
         public DateTime FromDate { get; set; } = DateTime.Now;
         public DateTime ToDate { get; set; }
-        public bool IsCompleted { get; set; } = false;
-        public Priority? Priority { get; set; }
+        public string? Priority { get; set; }
+        public string? Status { get; set; }
 
-        public IEnumerable<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();  
-        public IEnumerable<Todo> Todos { get; set; } = new List<Todo>();
-    }
-
-    public enum Priority
-    {
-        High =1 ,
-        Medium =2 ,
-        Low =3 ,
+        public ICollection<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();  
+        public ICollection<Todo> Todos { get; set; } = new List<Todo>();
     }
 }

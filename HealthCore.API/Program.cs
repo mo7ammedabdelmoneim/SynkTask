@@ -1,4 +1,3 @@
-
 using SynkTask.API.Configurations.Models;
 using SynkTask.DataAccess.Data;
 using SynkTask.DataAccess.IConfiguration;

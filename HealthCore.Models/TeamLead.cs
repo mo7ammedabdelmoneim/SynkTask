@@ -22,5 +22,8 @@ namespace SynkTask.Models
         [ForeignKey(nameof(ApplicationUserId))]
         public ApplicationUser ApplicationUser { get; set; } 
 
+
+        public IEnumerable<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();
+
     }
 }

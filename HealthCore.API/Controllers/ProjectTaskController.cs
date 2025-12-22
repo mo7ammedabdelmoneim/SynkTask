@@ -35,12 +35,20 @@ namespace SynkTask.API.Controllers
             }
 
             var project = await unitOfWork.Projects.GetAsync(p => p.Id == taskDto.ProjectId);
-            var member = await unitOfWork.TeamMembers.GetAsync(m => m.Id == taskDto.AssignedMemberId);
+            var taskMembers = new List<TeamMember>();
+            var team = await unitOfWork.Teams.GetAsync(t => t.TeamLeadId == project.TeamLeadId);
+            var allTeamMembers = await unitOfWork.TeamMembers.GetAllAsync(m => m.TeamId == team.Id);
+            foreach (var email in taskDto.AssignedMembersEmail)
+            {
+                var member = allTeamMembers.FirstOrDefault(m => m.Email == email);
+                if(member != null)
+                    taskMembers.Add(member);
+            }
 
-            if (project == null || member == null)
+            if (project == null || !taskMembers.Any())
             {
                 response.Message = "Invalid input data";
-                response.Errors = new List<string> { "ProjectId or AssignedMemberId is Wrong." };
+                response.Errors = new List<string> { "ProjectId or AssignedMembers is Wrong." };
                 return BadRequest(response);
             }
 
@@ -50,11 +58,11 @@ namespace SynkTask.API.Controllers
                 Description = taskDto.Description,
                 TeamLeadId = project.TeamLeadId,
                 ProjectId = taskDto.ProjectId,
-                //AssignedMemberId = taskDto.AssignedMemberId,
                 FromDate = taskDto.FromDate,
-                ToDate = taskDto.ToDate,
-                Priority = taskDto.Priority,
-                IsCompleted = taskDto.IsCompleted,
+                ToDate = taskDto.DueDate,
+                Priority = taskDto.Priority ?? "Esay",
+                Status = taskDto.Status = "Pending",
+                AssignedMembers = taskMembers
             };
             await unitOfWork.ProjectTasks.AddAsync(newProjectTask);
             await unitOfWork.CompleteAsync();
@@ -66,54 +74,119 @@ namespace SynkTask.API.Controllers
                 Description = newProjectTask.Description,
                 TeamLeadId = newProjectTask.TeamLeadId,
                 ProjectId = newProjectTask.ProjectId,
-               // AssignedMemberId = newProjectTask.AssignedMemberId,
                 FromDate = newProjectTask.FromDate,
-                ToDate = newProjectTask.ToDate,
-                Priority =(Priority)newProjectTask.Priority,
-                IsCompleted = newProjectTask.IsCompleted,
+                DueDate = newProjectTask.ToDate,
+                Priority =newProjectTask.Priority,
+                Status=newProjectTask.Status,
+                AssignedMemebers = taskMembers.Select(m => new GetTaskMemberDto
+                {
+                    MemberId = m.Id,
+                    MemberName = m.FirstName,
+                    Email = m.Email,
+                    ImageUrl = m.ImageUrl
+                }).ToList()
             };
 
             response.Message = "Project Task Added Successfully";
             response.Success = true;
             response.Data = responseData;
 
-            return Ok(responseData);
+            return Ok(response);
         }
 
-
-        [HttpGet("Info/{projectTaskId:guid}")]
+        [HttpPut]
         [ProducesResponseType<ApiResponse<GetProjectTaskInfoResponseDto>>(200)]
-        public async Task<IActionResult> GetProjectTaskInfoAsync(Guid projectTaskId)
+        public async Task<IActionResult> UpdateProjectTask(UpdateProjectTaskDto taskDto)
         {
             var response = new ApiResponse<GetProjectTaskInfoResponseDto>();
 
-            var projectTask = await unitOfWork.ProjectTasks.GetAsync(p => p.Id == projectTaskId);
-            if (projectTask == null)
+            if (!ModelState.IsValid)
             {
-                response.Message = "Invalid Input";
-                response.Errors = new List<string>() { "ProjectTaskId is Wrong" };
+                response.Message = "Invalid input data";
+                response.Errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
                 return BadRequest(response);
             }
 
-            var projectTaskResponse = new GetProjectTaskInfoResponseDto
+            var task = await unitOfWork.ProjectTasks.GetAsync(t=> t.Id == taskDto.TaskId);
+            if (task == null )
             {
-                Id = projectTask.Id,
-                Title = projectTask.Title,
-                Description = projectTask.Description,
-                TeamLeadId = projectTask.TeamLeadId,
-                ProjectId = projectTask.ProjectId,
-               // AssignedMemberId = projectTask.AssignedMemberId,
-                FromDate = projectTask.FromDate,
-                ToDate = projectTask.ToDate,
-                Priority = (Priority)projectTask.Priority,
-                IsCompleted = projectTask.IsCompleted,
+                response.Message = "Invalid input data";
+                response.Errors = new List<string> { "TaskId is Wrong." };
+                return BadRequest(response);
+            }
+
+            var taskMembers = new List<TeamMember>();
+            var team = await unitOfWork.Teams.GetAsync(t => t.TeamLeadId == task.TeamLeadId);
+            var allTeamMembers = await unitOfWork.TeamMembers.GetAllAsync(m => m.TeamId == team.Id);
+            foreach (var email in taskDto.AssignedMembersEmail)
+            {
+                var member = allTeamMembers.FirstOrDefault(m => m.Email == email);
+                if (member != null)
+                    taskMembers.Add(member);
+            }
+
+            if (!taskMembers.Any())
+            {
+                response.Message = "Invalid input data";
+                response.Errors = new List<string> { "AssignedMembers are not found." };
+                return BadRequest(response);
+            }
+
+            await unitOfWork.ProjectTasks.ResetAssignedMembersAsync(task.Id);
+
+            task.Title = taskDto.Title;
+            task.Description = taskDto.Description;
+            task.Priority = taskDto.Priority;
+            task.ToDate = taskDto.DueDate;
+            task.AssignedMembers = taskMembers;
+
+            unitOfWork.ProjectTasks.Update(task);
+            await unitOfWork.CompleteAsync();
+
+            var responseData = new GetProjectTaskInfoResponseDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                TeamLeadId = task.TeamLeadId,
+                ProjectId = task.ProjectId,
+                FromDate = task.FromDate,
+                DueDate = task.ToDate,
+                Priority = task.Priority,
+                Status = task.Status,
+                AssignedMemebers = taskMembers.Select(m => new GetTaskMemberDto
+                {
+                    MemberId = m.Id,
+                    MemberName = m.FirstName,
+                    Email = m.Email,
+                    ImageUrl = m.ImageUrl
+                }).ToList()
             };
 
+            response.Message = "Project Task Updated Successfully";
             response.Success = true;
-            response.Message = "Project Task Info Retrieved Successfully";
-            response.Data = projectTaskResponse;
+            response.Data = responseData;
 
             return Ok(response);
+        }
+
+        [HttpDelete("{taskId:guid}")]
+        public async Task<IActionResult> DeleteProjectTask(Guid taskId)
+        {
+            var task = await unitOfWork.ProjectTasks.GetAsync(t => t.Id == taskId);
+            if (task == null)
+            {
+                return BadRequest("TaskId is wrong.");
+            }
+
+            await unitOfWork.ProjectTasks.Delete(task);
+            await unitOfWork.CompleteAsync();
+
+            return NoContent();
         }
 
 

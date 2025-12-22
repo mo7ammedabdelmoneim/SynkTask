@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SynkTask.DataAccess.Repository.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace SynkTask.DataAccess.Repository
 {
@@ -16,6 +17,14 @@ namespace SynkTask.DataAccess.Repository
              ApplicationDbContext context,
              ILogger<GenericRepository<ProjectTask>> logger) : base(context, logger)
         {
+        }
+
+        public async Task ResetAssignedMembersAsync(Guid taskId)
+        {
+            var task = await context.ProjectTasks.Include(t=>t.AssignedMembers).FirstOrDefaultAsync(t=>t.Id == taskId);
+
+            task?.AssignedMembers.Clear();
+            context.SaveChanges();
         }
 
     }

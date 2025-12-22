@@ -50,45 +50,172 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
+
         [HttpGet("Dashboard/{teamLeadId:guid}")]
-        [ProducesResponseType<ApiResponse<GetTeamLeadInfoResponseDto>>(200)]
+        [ProducesResponseType<ApiResponse<GetTeamLeadDashboardDataResponseDto>>(200)]
         public async Task<IActionResult> GetTeamLeadDashboardData(Guid teamLeadId)
         {
-            
+            var response = new ApiResponse<GetTeamLeadDashboardDataResponseDto>();
+
+            var teamLead = await unitOfWork.TeamLeads.GetAsync(l => l.Id == teamLeadId);
+            if (teamLead == null)
+            {
+                response.Message = "Invalid Input";
+                response.Errors = new List<string>() { "TeamLeadId is Wrong" };
+                return BadRequest(response);
+            }
+
+            var tasks = await unitOfWork.ProjectTasks.GetAllAsync(t => t.TeamLeadId == teamLeadId);
+            var recentTasks = tasks.OrderByDescending(t => t.FromDate).Select(t => new RecentTasksDto
+            {
+                Title = t.Title,
+                CreatedAt = t.FromDate,
+                Status = t.Status,
+                Priority = t.Priority
+            }).ToList();
+
+            int totalTasks = tasks.Count();
+            int pendingTasks = tasks.Count(t => t.Status?.ToLower() == "pending");
+            int inProgressTasks = tasks.Count(t => t.Status?.ToLower() == "in progress");
+            int completedTasks = tasks.Count(t => t.Status?.ToLower() == "completed");
+
+            // Task Priority
+            int lowTasks = tasks.Count(t => t.Priority?.ToLower() == "low");
+            int mediumTasks = tasks.Count(t => t.Priority?.ToLower() == "meduim");
+            int highTasks = tasks.Count(t => t.Priority?.ToLower() == "high");
+
+            var data = new GetTeamLeadDashboardDataResponseDto
+            {
+                TotalTasks = totalTasks,
+                CompletedTasks = completedTasks,
+                PendingTasks = pendingTasks,
+                InProgressTasks = inProgressTasks,
+                HighTasks = highTasks,
+                LowTasks = lowTasks,
+                MediumTasks = mediumTasks,
+                RecentTasks = recentTasks,
+            };
+
+            response.Success = true;
+            response.Message = "TeamLead Dashboard Data Retreived Successfully";
+            response.Data = data;
+
+            return Ok(response);
         }
 
-        //[HttpGet("TaskMemers/{teamLeadId:guid}")]
-        //[ProducesResponseType<ApiResponse<List<GetTeamMemberInfoResponseDto>>>(200)]
-        //public async Task<IActionResult> GetTeamMemerForTeamLeadAsync(Guid teamLeadId)
-        //{
-        //    var response = new ApiResponse<List<GetTeamMemberInfoResponseDto>>();
 
-        //    var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamLeadId == teamLeadId);
-        //    if (!members.Any())
-        //    {
-        //        response.Success = true;
-        //        response.Message = "No Data";
-        //        response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
-        //        return NotFound(response);
-        //    }
+        [HttpGet("Projects/{teamLeadId:guid}")]
+        [ProducesResponseType<ApiResponse<List<GetTeamLeadProjectInfoResponseDto>>>(200)]
+        public async Task<IActionResult> GetTeamLeadProjectsAsync(Guid teamLeadId)
+        {
+            var response = new ApiResponse<List<GetTeamLeadProjectInfoResponseDto>>();
+            
 
-        //    List<GetTeamMemberInfoResponseDto> membersResponse = members.Select(member => new GetTeamMemberInfoResponseDto
-        //    {
-        //        Id = member.Id,
-        //        FirstName = member.FirstName,
-        //        TeamLeadId = member.TeamLeadId,
-        //        Country = member.Country,
-        //        Email = member.Email,
-        //        LastName = member.LastName,
-        //        Role = member.Role,
-        //    }).ToList();
+            var projects = await unitOfWork.Projects.GetAllAsync(p => p.TeamLeadId == teamLeadId,includedProperties: "Tasks");
+            if (!projects.Any())
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "No Projects For This TeamLead" };
+                return NotFound(response);
+            }
+
+            List<GetTeamLeadProjectInfoResponseDto> projectResponse = projects.Select(prject => new GetTeamLeadProjectInfoResponseDto
+            {
+                Id = prject.Id,
+                Name = prject.Name,
+                TeamLeadId = prject.TeamLeadId,
+                Description = prject.Description,
+                IsActive = prject.IsActive,
+                TaskCount = prject.Tasks.Count()
+            }).ToList();
 
 
-        //    response.Success = true;
-        //    response.Message = "TeamMembers Retrieved Successfully";
-        //    response.Data = membersResponse;
+            response.Success = true;
+            response.Message = "TeamLead Projects Retrieved Successfully";
+            response.Data = projectResponse;
 
-        //    return Ok(response);
-        //}
+            return Ok(response);
+        }
+        
+        
+        [HttpGet("Tasks/{teamLeadId:guid}")]
+        [ProducesResponseType<ApiResponse<List<GetTeamMemberOfTeamLeadResponseDto>>>(200)]
+        public async Task<IActionResult> GetTeamLeadTasksAsync(Guid teamLeadId)
+        {
+            var response = new ApiResponse<List<GetTeamLeadTaskInfoResponseDto>>();
+
+            var tasks = await unitOfWork.ProjectTasks.GetAllAsync(p => p.TeamLeadId == teamLeadId, includedProperties: "AssignedMembers,Todos");
+            if (!tasks.Any())
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "No Tasks For This TeamLead" };
+                return NotFound(response);
+            }
+
+            List<GetTeamLeadTaskInfoResponseDto> tasksResponse = tasks.Select(task => new GetTeamLeadTaskInfoResponseDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Priority = task.Priority,
+                Description = task.Description,
+                Status = task.Status,
+                FromDate = task.FromDate,
+                DueDate = task.ToDate,
+                AssignedMembersPicture = task.AssignedMembers.Select(m => m.ImageUrl).ToList(),
+                Todos = task.Todos.Count(),
+                CompletedTodos = task.Todos.Count(t=> t.IsCompleted)
+            }).OrderBy(t=>t.DueDate).ToList();
+
+            response.Success = true;
+            response.Message = "TeamLead Tasks Retrieved Successfully";
+            response.Data = tasksResponse;
+
+            return Ok(response);
+        }
+
+
+        [HttpGet("TeamMembers/{teamLeadId:guid}")]
+        [ProducesResponseType<ApiResponse<List<GetTeamMemberOfTeamLeadResponseDto>>>(200)]
+        public async Task<IActionResult> GetTeamMemerForTeamLeadAsync(Guid teamLeadId)
+        {
+            var response = new ApiResponse<List<GetTeamMemberOfTeamLeadResponseDto>>();
+
+            var team = await unitOfWork.Teams.GetAsync(t => t.TeamLeadId == teamLeadId);
+            if (team == null)
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "TeamLead does not have teams" };
+                return NotFound(response);
+            }
+            var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamId == team.Id,includedProperties: "ProjectTasks");
+            if (!members.Any())
+            {
+                response.Success = true;
+                response.Message = "No Data";
+                response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
+                return NotFound(response);
+            }
+
+            List<GetTeamMemberOfTeamLeadResponseDto> membersResponse = members.Select(member => new GetTeamMemberOfTeamLeadResponseDto
+            {
+                Id = member.Id,
+                FirstName = member.FirstName,
+                LastName = member.LastName,
+                Email = member.Email,
+                ImageUrl = member.ImageUrl,
+                PendingTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "pending"),
+                InProgressTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "in progress"),
+                ComplttedTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "completed"),
+            }).ToList();
+
+            response.Success = true;
+            response.Message = "TeamMembers Retrieved Successfully";
+            response.Data = membersResponse;
+
+            return Ok(response);
+        }
     }
 }

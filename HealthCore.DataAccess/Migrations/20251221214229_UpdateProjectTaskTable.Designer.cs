@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SynkTask.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using SynkTask.DataAccess.Data;
 namespace SynkTask.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251221214229_UpdateProjectTaskTable")]
+    partial class UpdateProjectTaskTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -167,7 +170,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("ProjectTasksId");
 
-                    b.ToTable("ProjectTaskTeamMember", (string)null);
+                    b.ToTable("ProjectTaskTeamMember");
                 });
 
             modelBuilder.Entity("SynkTask.Models.ApplicationUser", b =>
@@ -245,7 +248,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasKey("Name");
 
-                    b.ToTable("Countries", (string)null);
+                    b.ToTable("Countries");
                 });
 
             modelBuilder.Entity("SynkTask.Models.IdentityApplicationUser", b =>
@@ -258,7 +261,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasKey("IdentityUserId");
 
-                    b.ToTable("IdentityApplicationUsers", (string)null);
+                    b.ToTable("IdentityApplicationUsers");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Notification", b =>
@@ -287,7 +290,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Project", b =>
@@ -313,7 +316,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("TeamLeadId");
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("SynkTask.Models.ProjectTask", b =>
@@ -354,7 +357,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("TeamLeadId");
 
-                    b.ToTable("ProjectTasks", (string)null);
+                    b.ToTable("ProjectTasks");
                 });
 
             modelBuilder.Entity("SynkTask.Models.RefreshToken", b =>
@@ -384,7 +387,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshToken", (string)null);
+                    b.ToTable("RefreshToken");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Team", b =>
@@ -407,7 +410,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("TeamLeadId");
 
-                    b.ToTable("Teams", (string)null);
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("SynkTask.Models.TeamLead", b =>
@@ -443,7 +446,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("TeamLeads", (string)null);
+                    b.ToTable("TeamLeads");
                 });
 
             modelBuilder.Entity("SynkTask.Models.TeamMember", b =>
@@ -484,7 +487,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("TeamMembers", (string)null);
+                    b.ToTable("TeamMembers");
                 });
 
             modelBuilder.Entity("SynkTask.Models.Todo", b =>
@@ -519,7 +522,7 @@ namespace SynkTask.DataAccess.Migrations
 
                     b.HasIndex("TeamMemberId");
 
-                    b.ToTable("Todos", (string)null);
+                    b.ToTable("Todos");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
