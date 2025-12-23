@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SynkTask.API.Configurations;
+using OfficeOpenXml;
 
 namespace SynkTask.API
 {
@@ -17,7 +18,10 @@ namespace SynkTask.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // EPPlus 8 License (Non-Commercial)
+            ExcelPackage.License.SetNonCommercialPersonal("Mohammed Ahmed");
+
+            // ******** Add services to the container.  ********
 
             builder.Services.AddControllers();
 
@@ -97,7 +101,7 @@ namespace SynkTask.API
 
             await SeedRolesAsync(app);
 
-          //  app.UseExceptionHandler();
+            app.UseExceptionHandler();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

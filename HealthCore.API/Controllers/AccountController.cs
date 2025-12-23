@@ -244,18 +244,6 @@ namespace SynkTask.API.Controllers
             };
             return Ok(response);
         }
-
-        [HttpGet("crateteam")]
-        public async Task<IActionResult> CreateAsync(string teamId)
-        {
-            await unitOfWork.Teams.AddAsync(new Team
-            {
-                TeamIdentifier = teamId,CreatedAt = DateTime.UtcNow,
-            });
-            await unitOfWork.CompleteAsync();
-
-            return Ok();
-        }
         
 
 

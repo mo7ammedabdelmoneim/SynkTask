@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SynkTask.Models.DTOs
@@ -23,5 +24,8 @@ namespace SynkTask.Models.DTOs
 
 
         public IEnumerable<string> AssignedMembersPicture { get; set; } = new List<string>();
+
+        [JsonIgnore]
+        public IEnumerable<string> AssignedMembers { get; set; } = new List<string>();
     }
 }
