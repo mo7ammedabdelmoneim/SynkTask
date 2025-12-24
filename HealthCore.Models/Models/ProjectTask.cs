@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkTask.Models
+namespace SynkTask.Models.Models
 {
     public class ProjectTask
     {
@@ -19,7 +19,7 @@ namespace SynkTask.Models
         public Project Project { get; set; }
 
         public Guid TeamLeadId { get; set; }
-        
+
         [ForeignKey(nameof(TeamLeadId))]
         public TeamLead TeamLead { get; set; }
 
@@ -28,7 +28,7 @@ namespace SynkTask.Models
         public string? Priority { get; set; }
         public string? Status { get; set; }
 
-        public ICollection<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();  
+        public ICollection<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();
         public ICollection<Todo> Todos { get; set; } = new List<Todo>();
     }
 }

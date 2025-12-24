@@ -1,5 +1,4 @@
 ﻿using SynkTask.DataAccess.Data;
-using SynkTask.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -8,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SynkTask.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using SynkTask.Models.Models;
 
 namespace SynkTask.DataAccess.Repository
 {

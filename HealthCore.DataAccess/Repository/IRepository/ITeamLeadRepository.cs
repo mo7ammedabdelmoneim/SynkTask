@@ -1,4 +1,4 @@
-﻿using SynkTask.Models;
+﻿using SynkTask.Models.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

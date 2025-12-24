@@ -1,7 +1,6 @@
 using SynkTask.API.Configurations.Models;
 using SynkTask.DataAccess.Data;
 using SynkTask.DataAccess.IConfiguration;
-using SynkTask.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SynkTask.API.Configurations;
 using OfficeOpenXml;
+using SynkTask.Models.Models;
+using System.Reflection;
 
 namespace SynkTask.API
 {
@@ -32,6 +33,7 @@ namespace SynkTask.API
             });
 
             builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JWT"));
+            builder.Services.Configure<EmailSenderConfig>(builder.Configuration.GetSection("EmailSettings"));
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -56,9 +58,14 @@ namespace SynkTask.API
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
             // Register Global Exception Handling 
-            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails(); 
 
+            // AutoMapper
+            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            // EmailSender 
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
 
             // Register the Cors Service
             builder.Services.AddCors(options =>

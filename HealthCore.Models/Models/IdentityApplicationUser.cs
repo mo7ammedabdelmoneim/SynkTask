@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkTask.Models
+namespace SynkTask.Models.Models
 {
-    public class Country
+    public class IdentityApplicationUser
     {
         [Key]
-        public string Name { get; set; }
-        public bool IsAvailable { get; set; } = true;
+        public string IdentityUserId { get; set; }
+        public Guid ApplicationUserId { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using SynkTask.DataAccess.IConfiguration;
 using SynkTask.Models;
 using SynkTask.Models.DTOs;
 using SynkTask.Models.DTOs.Auth;
+using SynkTask.Models.Models;
 
 namespace SynkTask.API.Controllers
 {

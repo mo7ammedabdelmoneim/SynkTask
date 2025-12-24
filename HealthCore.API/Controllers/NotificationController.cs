@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SynkTask.DataAccess.IConfiguration;
-using SynkTask.Models;
 using SynkTask.Models.DTOs;
+using SynkTask.Models.Models;
 
 namespace SynkTask.API.Controllers
 {
@@ -92,7 +92,5 @@ namespace SynkTask.API.Controllers
             return Ok(response);
 
         }
-
-
     }
 }

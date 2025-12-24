@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkTask.Models
+namespace SynkTask.Models.Models
 {
     public class Notification
     {

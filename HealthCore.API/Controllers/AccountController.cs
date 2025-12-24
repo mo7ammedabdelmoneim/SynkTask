@@ -19,6 +19,7 @@ using Azure;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
+using SynkTask.Models.Models;
 
 namespace SynkTask.API.Controllers
 {
