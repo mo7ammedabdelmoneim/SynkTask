@@ -219,7 +219,8 @@ namespace SynkTask.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TeamLeads",
+                name: 
+                "TeamLeads",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),

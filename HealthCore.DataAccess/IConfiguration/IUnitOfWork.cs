@@ -20,6 +20,7 @@ namespace SynkTask.DataAccess.IConfiguration
         IProjectRepository Projects { get; }
         IProjectTaskRepository ProjectTasks { get; }
         ITodoRepository Todos { get; }
+        ITaskAttachmentRepository TaskAttachments { get; }
 
 
         Task CompleteAsync();

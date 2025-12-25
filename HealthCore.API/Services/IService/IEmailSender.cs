@@ -1,4 +1,4 @@
-﻿namespace SynkTask.API.Configurations
+﻿namespace SynkTask.API.Services.IService
 {
     public interface IEmailSender
     {

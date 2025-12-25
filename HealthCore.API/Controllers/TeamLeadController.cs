@@ -7,6 +7,7 @@ using SynkTask.Models.DTOs;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using OfficeOpenXml;
+using SynkTask.Models.Models;
 
 namespace SynkTask.API.Controllers
 {
@@ -78,14 +79,14 @@ namespace SynkTask.API.Controllers
             }).ToList();
 
             int totalTasks = tasks.Count();
-            int pendingTasks = tasks.Count(t => t.Status?.ToLower() == "pending");
-            int inProgressTasks = tasks.Count(t => t.Status?.ToLower() == "in progress");
-            int completedTasks = tasks.Count(t => t.Status?.ToLower() == "completed");
+            int pendingTasks = tasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.Pending.ToLower());
+            int inProgressTasks = tasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.InProgress.ToLower());
+            int completedTasks = tasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.Completed.ToLower());
 
             // Task Priority
-            int lowTasks = tasks.Count(t => t.Priority?.ToLower() == "low");
-            int mediumTasks = tasks.Count(t => t.Priority?.ToLower() == "meduim");
-            int highTasks = tasks.Count(t => t.Priority?.ToLower() == "high");
+            int lowTasks = tasks.Count(t => t.Priority?.ToLower() == TaskPriority.Low.ToLower());
+            int mediumTasks = tasks.Count(t => t.Priority?.ToLower() == TaskPriority.Medium.ToLower());
+            int highTasks = tasks.Count(t => t.Priority?.ToLower() == TaskPriority.High.ToLower());
 
             var data = new GetUserDashboardDataResponseDto
             {
@@ -117,7 +118,6 @@ namespace SynkTask.API.Controllers
             var projects = await unitOfWork.Projects.GetAllAsync(p => p.TeamLeadId == teamLeadId,includedProperties: "Tasks");
             if (!projects.Any())
             {
-                response.Success = true;
                 response.Message = "No Data";
                 response.Errors = new List<string>() { "No Projects For This TeamLead" };
                 return NotFound(response);
@@ -188,7 +188,6 @@ namespace SynkTask.API.Controllers
             var team = await unitOfWork.Teams.GetAsync(t => t.TeamLeadId == teamLeadId);
             if (team == null)
             {
-                response.Success = true;
                 response.Message = "No Data";
                 response.Errors = new List<string>() { "TeamLead does not have teams" };
                 return NotFound(response);
@@ -196,7 +195,6 @@ namespace SynkTask.API.Controllers
             var members = await unitOfWork.TeamMembers.GetAllAsync(p => p.TeamId == team.Id,includedProperties: "ProjectTasks");
             if (!members.Any())
             {
-                response.Success = true;
                 response.Message = "No Data";
                 response.Errors = new List<string>() { "No TeamMembers For This TeamLead" };
                 return NotFound(response);
@@ -209,9 +207,9 @@ namespace SynkTask.API.Controllers
                 LastName = member.LastName,
                 Email = member.Email,
                 ImageUrl = member.ImageUrl,
-                PendingTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "pending"),
-                InProgressTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "in progress"),
-                ComplttedTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "completed"),
+                PendingTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.Pending.ToLower()),
+                InProgressTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.InProgress.ToLower()),
+                ComplttedTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.Completed.ToLower()),
             }).ToList();
 
             response.Success = true;
@@ -317,9 +315,9 @@ namespace SynkTask.API.Controllers
                 LastName = member.LastName,
                 Email = member.Email,
                 ImageUrl = member.ImageUrl,
-                PendingTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "pending"),
-                InProgressTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "in progress"),
-                ComplttedTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == "completed"),
+                PendingTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.Pending.ToLower()),
+                InProgressTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.InProgress.ToLower()),
+                ComplttedTasks = member.ProjectTasks.Count(t=> t.Status?.ToLower() == ProjectTaskStatus.Completed.ToLower()),
             }).ToList();
 
 

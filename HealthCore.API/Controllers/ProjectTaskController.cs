@@ -2,10 +2,14 @@
 using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SynkTask.API.Configurations;
+using SynkTask.API.Services.IService;
 using SynkTask.DataAccess.IConfiguration;
+using SynkTask.DataAccess.Repository.IRepository;
 using SynkTask.Models.DTOs;
 using SynkTask.Models.Models;
+using System.Net.Mail;
 
 namespace SynkTask.API.Controllers
 {
@@ -14,20 +18,23 @@ namespace SynkTask.API.Controllers
     public class ProjectTaskController : ControllerBase
     {
         private readonly IUnitOfWork unitOfWork;
-        private readonly IEmailSender emailSender;
+        private readonly IEmailService emailRepository;
+        private readonly IFileStorageService fileStorageService;
 
-        public ProjectTaskController(IUnitOfWork unitOfWork, IEmailSender emailSender)
+        public ProjectTaskController(IUnitOfWork unitOfWork, IEmailService emailRepository, IFileStorageService fileStorageService)
         {
             this.unitOfWork = unitOfWork;
-            this.emailSender = emailSender;
+            this.emailRepository = emailRepository;
+            this.fileStorageService = fileStorageService;
         }
 
         [HttpGet("Info/{taskId:guid}")]
+        [ProducesResponseType<ApiResponse<GetTaskInfoResponseDto>>(200)]
         public async Task<IActionResult> GetTaskInfo(Guid taskId)
         {
             var response = new ApiResponse<GetTaskInfoResponseDto>();
 
-            var task = await unitOfWork.ProjectTasks.GetAsync(t => t.Id == taskId, includedProperties: "AssignedMembers,Todos");
+            var task = await unitOfWork.ProjectTasks.GetAsync(t => t.Id == taskId, includedProperties: "AssignedMembers,Todos,Attachments");
             if (task == null)
             {
                 response.Message = "Invalid Input";
@@ -56,7 +63,14 @@ namespace SynkTask.API.Controllers
                     IsCompleted = t.IsCompleted,
                     TaskId = t.TaskId,
                     TeamMemberId = t.TeamMemberId
-                }).ToList()
+                }).ToList(),
+                Attachments = task.Attachments.Select(a => new TaskAttachmentDto
+                {
+                    Id = a.Id,
+                    FileUrl = a.FileUrl,
+                    FileName = a.FileName,
+                    FileType = a.ResourceType
+                }).ToList(),
             };
 
             response.Success = true;
@@ -65,6 +79,7 @@ namespace SynkTask.API.Controllers
 
             return Ok(response);
         }
+
 
         [HttpPost]
         [ProducesResponseType<ApiResponse<GetProjectTaskInfoResponseDto>>(200)]
@@ -110,14 +125,16 @@ namespace SynkTask.API.Controllers
                 FromDate = taskDto.FromDate,
                 ToDate = taskDto.DueDate,
                 Priority = taskDto.Priority ?? "Esay",
-                Status = taskDto.Status = "Pending",
+                Status = taskDto.Status = ProjectTaskStatus.Pending,
                 AssignedMembers = taskMembers
             };
             await unitOfWork.ProjectTasks.AddAsync(newProjectTask);
 
             // send notifications and emails 
-            var projectName = unitOfWork.Projects.GetAsync(p => p.Id == project.Id).Result.Name;
-            var teamLeadName = unitOfWork.TeamLeads.GetAsync(p => p.Id == team.TeamLeadId).Result.FirstName;
+            var projectEntity = await unitOfWork.Projects.GetAsync(p => p.Id == project.Id);
+            var projectName = projectEntity.Name;
+            var teamLead = await unitOfWork.TeamLeads.GetAsync(p => p.Id == team.TeamLeadId);
+            var teamLeadName = teamLead.FirstName;
             foreach (var member in taskMembers)
             {
                 var notification = new Notification
@@ -126,11 +143,11 @@ namespace SynkTask.API.Controllers
                     Title = "New Task Assigned",
                     Description = $"You have been assigned a new task \"{newProjectTask.Title}\" in project \"{projectName}\".\r\nPlease review and start working on it.",
                     UserId = member.Id,
-                    Role = "TeamMember"
+                    Role = Roles.TeamMember
                 };
                 await unitOfWork.Notifications.AddAsync(notification);
 
-                await SendNewTaskEmailEmailAsync(member.Email, member.FirstName, projectName, newProjectTask.Title, teamLeadName, newProjectTask.ToDate.ToString("dd/MM/yyyy"));
+                await emailRepository.SendNewTaskEmailEmailAsync(member.Email, member.FirstName, projectName, newProjectTask.Title, teamLeadName, newProjectTask.ToDate.ToString("dd/MM/yyyy"));
             }
 
 
@@ -162,6 +179,56 @@ namespace SynkTask.API.Controllers
 
             return Ok(response);
         }
+
+
+        [HttpPost("Attachments/{taskId:guid}")]
+        [ProducesResponseType<ApiResponse<List<TaskAttachmentDto>>>(200)]
+        public async Task<IActionResult> UploadAttachments(Guid taskId, [FromForm] List<IFormFile> files)
+        {
+            var response = new ApiResponse<List<TaskAttachmentDto>>();
+            if (!files.Any())
+            {
+                response.Message = "No files uploaded";
+                response.Errors = new List<string> { "No data to uploade" };
+                return BadRequest(response);
+            }
+
+            var attachments = new List<TaskAttachment>();
+
+            foreach (var file in files)
+            {
+                var upload = await fileStorageService.UploadAsync(file, taskId);
+
+                var attachment = new TaskAttachment
+                {
+                    TaskId = taskId,
+                    FileName = file.FileName,
+                    FileUrl = upload.Url,
+                    PublicId = upload.PublicId,
+                    ResourceType = upload.ResourceType,
+                    FileSize = file.Length,
+                    ContentType = file.ContentType
+                };
+                attachments.Add(attachment);
+                await unitOfWork.TaskAttachments.AddAsync(attachment);
+            }
+            await unitOfWork.CompleteAsync();
+
+            var responseData = attachments.Select(a => new TaskAttachmentDto
+            {
+                Id = a.Id,
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.ResourceType
+            }).ToList();
+
+            response.Success = true;
+            response.Message = "Data uploaded successfull";
+            response.Data = responseData;
+
+            return Ok(response);
+        }
+
 
         [HttpPut]
         [ProducesResponseType<ApiResponse<GetProjectTaskInfoResponseDto>>(200)]
@@ -243,6 +310,7 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
+
         [HttpDelete("{taskId:guid}")]
         public async Task<IActionResult> DeleteProjectTask(Guid taskId)
         {
@@ -273,7 +341,8 @@ namespace SynkTask.API.Controllers
             task.Status = taskDto.Status;
 
             // Send Notification and Emails to teamMembers
-            var projectName = unitOfWork.Projects.GetAsync(p => p.Id == task.ProjectId).Result.Name;
+            var projectEntity = await unitOfWork.Projects.GetAsync(p => p.Id == task.ProjectId);
+            var projectName = projectEntity.Name;
             foreach (var member in task.AssignedMembers)
             {
                 var notification = new Notification
@@ -282,15 +351,15 @@ namespace SynkTask.API.Controllers
                     Title = " Task Status Updated",
                     Description = $"The status of task \"{task.Title}\" has been updated to \"{task.Status}\".",
                     UserId = member.Id,
-                    Role = "TeamMember"
+                    Role = Roles.TeamMember
                 };
                 await unitOfWork.Notifications.AddAsync(notification);
 
-                await SendTaskUpdatedEmailEmailAsync(member.Email, member.FirstName, projectName, task.Title, task.Status);
+                await emailRepository.SendTaskUpdatedEmailEmailAsync(member.Email, member.FirstName, projectName, task.Title, task.Status);
             }
 
             // Send Notification and Emails to TeamLead if Task is Completed
-            if (task.Status.ToLower() == "completed")
+            if (task.Status.ToLower() == ProjectTaskStatus.Completed.ToLower())
             {
                 var notification = new Notification
                 {
@@ -298,11 +367,11 @@ namespace SynkTask.API.Controllers
                     Title = "Task Completed",
                     Description = $"Task \"{task.Title}\" in project \"{projectName}\" has been completed.",
                     UserId = task.TeamLeadId,
-                    Role = "TeamLead"
+                    Role = Roles.TeamLead
                 };
                 await unitOfWork.Notifications.AddAsync(notification);
                 var teamlead = await unitOfWork.TeamLeads.GetAsync(l => l.Id == task.TeamLeadId);
-                await SendTaskCompletedEmailEmailAsync(teamlead.Email, teamlead.FirstName, projectName, task.Title);
+                await emailRepository.SendTaskCompletedEmailEmailAsync(teamlead.Email, teamlead.FirstName, projectName, task.Title);
             }
 
             await unitOfWork.CompleteAsync();
@@ -346,78 +415,5 @@ namespace SynkTask.API.Controllers
             return Ok(response);
         }
 
-
-
-
-        async Task SendNewTaskEmailEmailAsync(string email, string userName, string projectName, string taskTitle, string teamleadName, string dueDate)
-        {
-            var subject = "New Task Assigned to You";
-
-            var message = $""""
-                Hello {userName},
-
-                You have been assigned a new task in the project "{projectName}".
-
-                Task Details:
-                - Task: {taskTitle}
-                - Assigned By: {teamleadName}
-                - Due Date: {dueDate}
-
-                Please log in to the system to review the task and start working on it.
-
-                Best regards,
-                Task Management System
-                
-                """";
-
-            await emailSender.SendEmailAsync(email, subject, message);
-        }
-        async Task SendTaskUpdatedEmailEmailAsync(string email, string userName, string projectName, string taskTitle, string newStatus)
-        {
-            var subject = "Task Status Update Notification";
-
-            var message = $""""
-                Hello {userName},
-
-                The status of the following task has been updated:
-
-                Task: {taskTitle}
-                Project: {projectName}
-                New Status: {newStatus}
-
-                Please log in to the system for more details.
-
-                Best regards,
-                Task Management System
-                
-                """";
-
-            await emailSender.SendEmailAsync(email, subject, message);
-        }
-        async Task SendTaskCompletedEmailEmailAsync(string email, string userName,string projectName, string taskTitle)
-        {
-            var subject = "Task Completed – Project Update";
-
-            var message = $""""
-                Hello {userName},
-
-                We’re happy to inform you that a task has been successfully completed.
-
-                Task Details:
-
-                Task Title: {taskTitle}
-
-                Project: {projectName}
-
-                This update indicates progress in the project workflow.
-                You can log in to the system to review the task details or take any further action if needed.
-
-                Best regards,
-                Task Management System
-
-                """";
-
-            await emailSender.SendEmailAsync(email, subject, message);
-        }
     }
 }

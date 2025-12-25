@@ -88,7 +88,7 @@ namespace SynkTask.API.Controllers
                 return BadRequest(response);
             }
 
-            var roleResult = await userManager.AddToRoleAsync(newUser, "teamMember");
+            var roleResult = await userManager.AddToRoleAsync(newUser, Roles.TeamMember);
             if (!roleResult.Succeeded)
             {
                 response.Message = "Registration failed";

@@ -20,6 +20,7 @@ namespace SynkTask.Models.DTOs
 
         public List<string> AssignedMemebersPicture { get; set; } = new List<string>();
         public List<GetTodoInfoResponseDto> Todos { get; set; } = new List<GetTodoInfoResponseDto>();
+        public List<TaskAttachmentDto> Attachments { get; set; } = new List<TaskAttachmentDto>();
 
 
     }

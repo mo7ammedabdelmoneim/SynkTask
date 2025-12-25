@@ -30,5 +30,6 @@ namespace SynkTask.Models.Models
 
         public ICollection<TeamMember> AssignedMembers { get; set; } = new List<TeamMember>();
         public ICollection<Todo> Todos { get; set; } = new List<Todo>();
+        public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
     }
 }

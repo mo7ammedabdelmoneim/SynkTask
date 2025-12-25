@@ -4,6 +4,7 @@ using SynkTask.DataAccess.Data;
 using SynkTask.DataAccess.IConfiguration;
 using SynkTask.Models.DTOs;
 using SynkTask.Models;
+using SynkTask.Models.Models;
 
 namespace SynkTask.API.Controllers
 {
@@ -73,14 +74,14 @@ namespace SynkTask.API.Controllers
             }).ToList();
 
             int totalTasks = teamMember.ProjectTasks.Count();
-            int pendingTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "pending");
-            int inProgressTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "in progress");
-            int completedTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == "completed");
+            int pendingTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.Pending.ToLower());
+            int inProgressTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.InProgress.ToLower());
+            int completedTasks = teamMember.ProjectTasks.Count(t => t.Status?.ToLower() == ProjectTaskStatus.Completed.ToLower());
 
             // Task Priority
-            int lowTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "low");
-            int mediumTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "meduim");
-            int highTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == "high");
+            int lowTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == TaskPriority.Low.ToLower());
+            int mediumTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == TaskPriority.Medium.ToLower());
+            int highTasks = teamMember.ProjectTasks.Count(t => t.Priority?.ToLower() == TaskPriority.High.ToLower());
 
             var data = new GetUserDashboardDataResponseDto
             {
@@ -111,14 +112,12 @@ namespace SynkTask.API.Controllers
             var teamMember = await unitOfWork.TeamMembers.GetTeamMemberWithTasksAsync(teamMemberId);
             if (teamMember == null)
             {
-                response.Success = false;
                 response.Message = "Invalid Input Data";
                 response.Errors = new List<string>() { "TeamMemberId is wrong" };
                 return BadRequest(response);
             }
             if (!teamMember.ProjectTasks.Any())
             {
-                response.Success = true;
                 response.Message = "No Data";
                 response.Errors = new List<string>() { "No Tasks For This TeamMember" };
                 return NotFound(response);

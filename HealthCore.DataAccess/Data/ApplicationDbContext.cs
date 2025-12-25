@@ -25,6 +25,7 @@ namespace SynkTask.DataAccess.Data
         public virtual DbSet<Todo> Todos {  get; set; }
         public virtual DbSet<Notification> Notifications {  get; set; }
         public virtual DbSet<IdentityApplicationUser> IdentityApplicationUsers {  get; set; }
+        public virtual DbSet<TaskAttachment> TaskAttachments {  get; set; }
 
 
 

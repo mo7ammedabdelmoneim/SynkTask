@@ -6,10 +6,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using SynkTask.API.Configurations;
 using OfficeOpenXml;
 using SynkTask.Models.Models;
 using System.Reflection;
+using CloudinaryDotNet;
+using Microsoft.Extensions.Options;
+using SynkTask.DataAccess.Repository.IRepository;
+using SynkTask.DataAccess.Repository;
+using SynkTask.API.Services.IService;
+using SynkTask.API.Services;
 
 namespace SynkTask.API
 {
@@ -33,7 +38,10 @@ namespace SynkTask.API
             });
 
             builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JWT"));
-            builder.Services.Configure<EmailSenderConfig>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.Configure<EmailSenderConfig>(builder.Configuration.GetSection("EmailSettings")); 
+            builder.Services.Configure<CloudinarySettingsConfig>(builder.Configuration.GetSection("Cloudinary")
+);
+
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -58,7 +66,7 @@ namespace SynkTask.API
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
             // Register Global Exception Handling 
-            //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails(); 
 
             // AutoMapper
@@ -66,6 +74,21 @@ namespace SynkTask.API
 
             // EmailSender 
             builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
+            // Cloudinary
+            builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
+            builder.Services.AddSingleton(sp =>
+            {
+                var settings = sp.GetRequiredService<IOptions<CloudinarySettingsConfig>>().Value;
+                var account = new Account(
+                    settings.CloudName,
+                    settings.ApiKey,
+                    settings.ApiSecret
+                );
+
+                return new Cloudinary(account);
+            });
 
             // Register the Cors Service
             builder.Services.AddCors(options =>
@@ -135,7 +158,7 @@ namespace SynkTask.API
 
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            string[] roles = { "admin", "teamLead", "teamMember" };
+            string[] roles = { Roles.Admin, Roles.TeamLead, Roles.TeamMember };
 
             foreach (var role in roles)
             {

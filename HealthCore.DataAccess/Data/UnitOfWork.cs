@@ -26,7 +26,7 @@ namespace SynkTask.DataAccess.Data
         public IProjectRepository Projects { get; }
         public IProjectTaskRepository ProjectTasks { get; }
         public ITodoRepository Todos { get; }
-
+        public ITaskAttachmentRepository TaskAttachments { get; }
 
 
         public UnitOfWork(ApplicationDbContext context, ILoggerFactory loggerFactory)
@@ -73,6 +73,10 @@ namespace SynkTask.DataAccess.Data
             Teams = new TeamRepository(
                 context,
                 loggerFactory.CreateLogger<GenericRepository<Team>>()
+            );
+            TaskAttachments = new TaskAttachmentRepository(
+                context,
+                loggerFactory.CreateLogger<GenericRepository<TaskAttachment>>()
             );
 
         }

@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using SynkTask.API.Configurations.Models;
-using System;
+using SynkTask.API.Services.IService;
 using System.Net;
 using System.Net.Mail;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace SynkTask.API.Configurations
+namespace SynkTask.API.Services
 {
     public class EmailSender : IEmailSender
     {
